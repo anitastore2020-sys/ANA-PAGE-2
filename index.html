@@ -24,6 +24,27 @@
         .catalogo-header { text-align: center; margin-bottom: 40px; }
         .catalogo-header h2 { font-family: 'Playfair Display', serif; font-size: 42px; font-weight: 600; color: #ad1457; margin-bottom: 10px; cursor: pointer; user-select: none; }
         .catalogo-header p { font-size: 16px; color: #666; }
+        .btn-filtro-stock { 
+    margin-top: 15px; 
+    padding: 10px 20px; 
+    background: #fff; 
+    color: #e91e63; 
+    border: 2px solid #e91e63; 
+    border-radius: 8px; 
+    font-weight: 600; 
+    cursor: pointer; 
+    font-size: 14px; 
+    transition: all 0.3s; 
+}
+.btn-filtro-stock:hover { 
+    background: #e91e63; 
+    color: #fff; 
+}
+.btn-filtro-stock.activo { 
+    background: #4caf50; 
+    color: #fff; 
+    border-color: #4caf50; 
+}
         .catalogo-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
         .producto-card { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.08); transition: transform 0.3s, box-shadow 0.3s; position: relative; }
         .producto-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(233, 30, 99, 0.2); }
@@ -111,6 +132,7 @@
 
         let isAdmin = false;
         let carrito = JSON.parse(localStorage.getItem('carrito') || '[]');
+        let ocultarSinStock = false;
         let lightboxUrls = [];
         let lightboxIndex = 0;
 
@@ -223,42 +245,58 @@
         }
 
         function cargarProductos() {
-            const productos = JSON.parse(localStorage.getItem('productos') || '[]');
-            const grid = document.getElementById('catalogoGrid');
-            grid.innerHTML = '';
-            productos.forEach((prod, index) => {
-                const card = document.createElement('div');
-                card.className = 'producto-card';
-                card.dataset.index = index;
-                const urls = prod.urls || [prod.url];
-                const tieneVarias = urls.length > 1;
-                let mediaHTML = '<div class="producto-galeria">';
-                urls.forEach((url, i) => {
-                    if (prod.tipo === 'video') {
-                        mediaHTML += `<video class="producto-media ${i === 0? 'active' : ''}" controls><source src="${url}" type="video/mp4"></video>`;
-                    } else {
-                        mediaHTML += `<img class="producto-media ${i === 0? 'active' : ''}" src="${url}" alt="${prod.nombre}" onclick="abrirLightbox([${urls.map(u => `'${u}'`).join(',')}], ${i})" style="cursor: zoom-in;" onerror="this.src='https://via.placeholder.com/280x280/f8bbd0/fff?text=Sin+Imagen'">`;
-                    }
-                });
-                if (tieneVarias) {
-                    mediaHTML += '<button class="galeria-flecha izq" onclick="cambiarFoto(this, -1)">‹</button>';
-                    mediaHTML += '<button class="galeria-flecha der" onclick="cambiarFoto(this, 1)">›</button>';
-                    mediaHTML += '<div class="galeria-dots">';
-                    urls.forEach((_, i) => {
-                        mediaHTML += `<span class="galeria-dot ${i === 0? 'active' : ''}" onclick="irAFoto(this, ${i})"></span>`;
-                    });
-                    mediaHTML += '</div>';
-                }
-                mediaHTML += '</div>';
-                const enCarrito = carrito.find(item => item.index === index);
-                const stockDisponible = prod.stock || 0;
-                const sinStock = stockDisponible <= 0;
-                const descripcionHTML = prod.descripcion? `<div class="producto-descripcion">${prod.descripcion}</div>` : '';
-                card.innerHTML = `<button class="delete-btn" onclick="eliminarProducto(${index})">×</button>${mediaHTML}<div class="producto-info"><div class="producto-nombre">${prod.nombre}</div>${descripcionHTML}<div class="producto-precio">Bs. ${prod.precio}</div><div class="producto-stock ${sinStock? 'sin-stock' : ''}">${sinStock? 'Sin stock' : `Stock: ${stockDisponible} disponibles`}</div><button class="btn-agregar ${enCarrito? 'agregado' : ''}" onclick="agregarAlCarrito(${index})" ${sinStock? 'disabled' : ''}>${sinStock? 'Sin stock' : (enCarrito? `✓ En carrito (${enCarrito.cantidad})` : '+ Agregar')}</button></div>`;
-                grid.appendChild(card);
+    const productos = JSON.parse(localStorage.getItem('productos') || '[]');
+    const grid = document.getElementById('catalogoGrid');
+    grid.innerHTML = '';
+    productos.forEach((prod, index) => {
+        const stockDisponible = prod.stock || 0;
+        const sinStock = stockDisponible <= 0;
+        
+        // Si el filtro está activo y no hay stock, saltamos este producto
+        if(ocultarSinStock && sinStock) return;
+        
+        const card = document.createElement('div');
+        card.className = 'producto-card';
+        card.dataset.index = index;
+        const urls = prod.urls || [prod.url];
+        const tieneVarias = urls.length > 1;
+        let mediaHTML = '<div class="producto-galeria">';
+        urls.forEach((url, i) => {
+            if (prod.tipo === 'video') {
+                mediaHTML += `<video class="producto-media ${i === 0? 'active' : ''}" controls><source src="${url}" type="video/mp4"></video>`;
+            } else {
+                mediaHTML += `<img class="producto-media ${i === 0? 'active' : ''}" src="${url}" alt="${prod.nombre}" onclick="abrirLightbox([${urls.map(u => `'${u}'`).join(',')}], ${i})" style="cursor: zoom-in;" onerror="this.src='https://via.placeholder.com/280x280/f8bbd0/fff?text=Sin+Imagen'">`;
+            }
+        });
+        if (tieneVarias) {
+            mediaHTML += '<button class="galeria-flecha izq" onclick="cambiarFoto(this, -1)">‹</button>';
+            mediaHTML += '<button class="galeria-flecha der" onclick="cambiarFoto(this, 1)">›</button>';
+            mediaHTML += '<div class="galeria-dots">';
+            urls.forEach((_, i) => {
+                mediaHTML += `<span class="galeria-dot ${i === 0? 'active' : ''}" onclick="irAFoto(this, ${i})"></span>`;
             });
+            mediaHTML += '</div>';
         }
+        mediaHTML += '</div>';
+        const enCarrito = carrito.find(item => item.index === index);
+        const descripcionHTML = prod.descripcion? `<div class="producto-descripcion">${prod.descripcion}</div>` : '';
+        card.innerHTML = `<button class="delete-btn" onclick="eliminarProducto(${index})">×</button>${mediaHTML}<div class="producto-info"><div class="producto-nombre">${prod.nombre}</div>${descripcionHTML}<div class="producto-precio">Bs. ${prod.precio}</div><div class="producto-stock ${sinStock? 'sin-stock' : ''}">${sinStock? 'Sin stock' : `Stock: ${stockDisponible} disponibles`}</div><button class="btn-agregar ${enCarrito? 'agregado' : ''}" onclick="agregarAlCarrito(${index})" ${sinStock? 'disabled' : ''}>${sinStock? 'Sin stock' : (enCarrito? `✓ En carrito (${enCarrito.cantidad})` : '+ Agregar')}</button></div>`;
+        grid.appendChild(card);
+    });
+}
 
+function toggleFiltroStock() {
+    ocultarSinStock = !ocultarSinStock;
+    const btn = document.getElementById('btnFiltroStock');
+    if(ocultarSinStock) {
+        btn.textContent = '👁️ Mostrar todos los productos';
+        btn.classList.add('activo');
+    } else {
+        btn.textContent = '👁️ Ocultar productos sin stock';
+        btn.classList.remove('activo');
+    }
+    cargarProductos();
+}
         function cambiarFoto(btn, direccion) {
             const galeria = btn.closest('.producto-galeria');
             const medias = galeria.querySelectorAll('.producto-media');
