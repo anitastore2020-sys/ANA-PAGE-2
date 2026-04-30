@@ -244,42 +244,45 @@
         }
 
         function cargarProductos() {
-            const productos = JSON.parse(localStorage.getItem('productos') || '[]');
-            const grid = document.getElementById('catalogoGrid');
-            grid.innerHTML = '';
-            productos.forEach((prod, index) => {
-                const card = document.createElement('div');
-                card.className = 'producto-card';
-                card.dataset.index = index;
-                const urls = prod.urls || [prod.url];
-                const tieneVarias = urls.length > 1;
-                let mediaHTML = '<div class="producto-galeria">';
-                urls.forEach((url, i) => {
-                    if (prod.tipo === 'video') {
-                        mediaHTML += `<video class="producto-media ${i === 0? 'active' : ''}" controls><source src="${url}" type="video/mp4"></video>`;
-                    } else {
-                        mediaHTML += `<img class="producto-media ${i === 0? 'active' : ''}" src="${url}" alt="${prod.nombre}" onerror="this.src='https://via.placeholder.com/280x280/f8bbd0/fff?text=Sin+Imagen'">`;
-                    }
-                });
-                if (tieneVarias) {
-                    mediaHTML += '<button class="galeria-flecha izq" onclick="cambiarFoto(this, -1)">‹</button>';
-                    mediaHTML += '<button class="galeria-flecha der" onclick="cambiarFoto(this, 1)">›</button>';
-                    mediaHTML += '<div class="galeria-dots">';
-                    urls.forEach((_, i) => {
-                        mediaHTML += `<span class="galeria-dot ${i === 0? 'active' : ''}" onclick="irAFoto(this, ${i})"></span>`;
-                    });
-                    mediaHTML += '</div>';
-                }
-                mediaHTML += '</div>';
-                const enCarrito = carrito.find(item => item.index === index);
-                const stockDisponible = prod.stock || 0;
-                const sinStock = stockDisponible <= 0;
-                const descripcionHTML = prod.descripcion? `<div class="producto-descripcion">${prod.descripcion}</div>` : '';
-                card.innerHTML = `<button class="delete-btn" onclick="eliminarProducto(${index})">×</button>${mediaHTML}<div class="producto-info"><div class="producto-nombre">${prod.nombre}</div>${descripcionHTML}<div class="producto-precio">Bs. ${prod.precio}</div><div class="producto-stock ${sinStock? 'sin-stock' : ''}">${sinStock? 'Sin stock' : `Stock: ${stockDisponible} disponibles`}</div><button class="btn-agregar ${enCarrito? 'agregado' : ''}" onclick="agregarAlCarrito(${index})" ${sinStock? 'disabled' : ''}>${sinStock? 'Sin stock' : (enCarrito? `✓ En carrito (${enCarrito.cantidad})` : '+ Agregar')}</button></div>`;
-                grid.appendChild(card);
+    const productos = JSON.parse(localStorage.getItem('productos') || '[]');
+    const grid = document.getElementById('catalogoGrid');
+    grid.innerHTML = '';
+    productos.forEach((prod, index) => {
+        const card = document.createElement('div');
+        card.className = 'producto-card';
+        card.dataset.index = index;
+        const urls = prod.urls || [prod.url];
+        const tieneVarias = urls.length > 1;
+        let mediaHTML = '<div class="producto-galeria">';
+        urls.forEach((url, i) => {
+            if (prod.tipo === 'video') {
+                mediaHTML += `<video class="producto-media ${i === 0? 'active' : ''}" controls><source src="${url}" type="video/mp4"></video>`;
+            } else {
+                mediaHTML += `<img class="producto-media ${i === 0? 'active' : ''}" src="${url}" alt="${prod.nombre}" onerror="this.src='https://via.placeholder.com/280x280/f8bbd0/fff?text=Sin+Imagen'">`;
+            }
+        });
+        if (tieneVarias) {
+            mediaHTML += '<button class="galeria-flecha izq" onclick="cambiarFoto(this, -1)">‹</button>';
+            mediaHTML += '<button class="galeria-flecha der" onclick="cambiarFoto(this, 1)">›</button>';
+            mediaHTML += '<div class="galeria-dots">';
+            urls.forEach((_, i) => {
+                mediaHTML += `<span class="galeria-dot ${i === 0? 'active' : ''}" onclick="irAFoto(this, ${i})"></span>`;
             });
+            mediaHTML += '</div>';
         }
-
+        mediaHTML += '</div>';
+        
+        const enCarrito = carrito.find(item => item.index === index);
+        const cantidadEnCarrito = enCarrito? enCarrito.cantidad : 0;
+        const stockTotal = prod.stock || 0;
+        const stockDisponible = stockTotal - cantidadEnCarrito;
+        const sinStock = stockDisponible <= 0;
+        const descripcionHTML = prod.descripcion? `<div class="producto-descripcion">${prod.descripcion}</div>` : '';
+        
+        card.innerHTML = `<button class="delete-btn" onclick="eliminarProducto(${index})">×</button>${mediaHTML}<div class="producto-info"><div class="producto-nombre">${prod.nombre}</div>${descripcionHTML}<div class="producto-precio">Bs. ${prod.precio}</div><div class="producto-stock ${sinStock? 'sin-stock' : ''}">${sinStock? 'Sin stock' : `Stock: ${stockDisponible} disponibles`}</div><button class="btn-agregar ${enCarrito? 'agregado' : ''}" onclick="agregarAlCarrito(${index})" ${sinStock? 'disabled' : ''}>${sinStock? 'Sin stock' : (enCarrito? `✓ En carrito (${enCarrito.cantidad})` : '+ Agregar')}</button></div>`;
+        grid.appendChild(card);
+    });
+}
         function cambiarFoto(btn, direccion) {
             const galeria = btn.closest('.producto-galeria');
             const medias = galeria.querySelectorAll('.producto-media');
