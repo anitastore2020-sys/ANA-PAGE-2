@@ -101,6 +101,286 @@
         @media (max-width: 600px) {.reel-item { flex: 1 1 100%; width: 100%; }.reels-container { padding: 30px 10px; }.catalogo-grid { grid-template-columns: 1fr; gap: 15px; }.admin-panel { width: calc(100% - 40px); right: 20px; }.catalogo-header h2 { font-size: 32px; }.carrito-contenido { width: 95%; padding: 20px; } }
     </style>
 </head>
+        <script>
+        const CONFIG = {
+            ADMIN_PASSWORD: 'Uñas2026Seguro',
+            ADMIN_KEY: 'k9m3p7x2q1z8a5b4',
+            WHATSAPP_NUMERO: '59163882223'
+        };
+
+        let isAdmin = false;
+        let carrito = JSON.parse(localStorage.getItem('carrito') || '[]');
+        let lightboxUrls = [];
+        let lightboxIndex = 0;
+
+        window.onload = function() {
+            cargarProductos();
+            actualizarCarrito();
+            inicializarAdmin();
+        }
+
+        function inicializarAdmin(){
+            const btn = document.querySelector('.admin-toggle');
+            if(localStorage.getItem('admin_key') === CONFIG.ADMIN_KEY){
+                activarModoAdmin();
+            }
+            const titulo = document.querySelector('.catalogo-header h2');
+            let clicks = 0;
+            let clickTimer;
+            titulo.addEventListener('click', () => {
+                clicks++;
+                clearTimeout(clickTimer);
+                if(clicks === 5){
+                    const codigo = prompt('Ingresa código de administrador:');
+                    if(codigo === CONFIG.ADMIN_PASSWORD){
+                        localStorage.setItem('admin_key', CONFIG.ADMIN_KEY);
+                        activarModoAdmin();
+                        alert('Modo Admin activado correctamente');
+                    } else if(codigo!== null) {
+                        alert('Código incorrecto');
+                    }
+                    clicks = 0;
+                }
+                clickTimer = setTimeout(() => clicks = 0, 1500);
+            });
+            if(window.location.search.includes('admin')){
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        }
+
+        function activarModoAdmin(){
+            isAdmin = true;
+            document.body.classList.add('admin-mode');
+            document.querySelector('.admin-toggle').style.display = 'block';
+        }
+
+        function toggleAdmin() {
+            if(localStorage.getItem('admin_key')!== CONFIG.ADMIN_KEY){
+                alert('No autorizado');
+                return;
+            }
+            document.getElementById('adminPanel').classList.toggle('active');
+            document.querySelector('.admin-toggle').textContent =
+                document.getElementById('adminPanel').classList.contains('active')? '✖️ Cerrar Admin' : '⚙️ Modo Admin';
+        }
+
+        function cerrarSesionAdmin() {
+            if(confirm('¿Cerrar sesión de administrador?')) {
+                localStorage.removeItem('admin_key');
+                location.reload();
+            }
+        }
+
+        function validarAdmin() {
+            if(localStorage.getItem('admin_key')!== CONFIG.ADMIN_KEY){
+                alert('No tienes permisos de administrador');
+                return false;
+            }
+            return true;
+        }
+
+        function convertirLinkDrive(url) {
+            url = url.trim();
+            if (url.includes('drive.google.com/file/d/')) {
+                const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                if (match && match[1]) { return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000`; }
+            }
+            return url;
+        }
+
+        function procesarUrlsMultiples(texto) {
+            return texto.split(/[\n,]+/).map(u => u.trim()).filter(u => u.length > 0).map(u => convertirLinkDrive(u));
+        }
+
+        function agregarProducto() {
+            if(!validarAdmin()) return;
+            const tipo = document.getElementById('tipoMedia').value;
+            const urlsTexto = document.getElementById('urlMedia').value.trim();
+            const nombre = document.getElementById('nombreProducto').value.trim();
+            const descripcion = document.getElementById('descripcionProducto').value.trim();
+            const precio = document.getElementById('precioProducto').value;
+            const stock = parseInt(document.getElementById('stockProducto').value) || 0;
+            if (!urlsTexto ||!nombre ||!precio) {
+                alert('Completá todos los campos');
+                return;
+            }
+            const urls = procesarUrlsMultiples(urlsTexto);
+            if (urls.length === 0) {
+                alert('Poné al menos una URL válida');
+                return;
+            }
+            const productos = JSON.parse(localStorage.getItem('productos') || '[]');
+            productos.push({ tipo, urls, nombre, descripcion, precio: parseFloat(precio), stock: stock });
+            localStorage.setItem('productos', JSON.stringify(productos));
+            document.getElementById('urlMedia').value = '';
+            document.getElementById('nombreProducto').value = '';
+            document.getElementById('descripcionProducto').value = '';
+            document.getElementById('precioProducto').value = '';
+            document.getElementById('stockProducto').value = '10';
+            cargarProductos();
+            alert('Producto agregado correctamente');
+        }
+
+        function cargarProductos() {
+            const productos = JSON.parse(localStorage.getItem('productos') || '[]');
+            const grid = document.getElementById('catalogoGrid');
+            grid.innerHTML = '';
+            productos.forEach((prod, index) => {
+                const card = document.createElement('div');
+                card.className = 'producto-card';
+                card.dataset.index = index;
+                const urls = prod.urls || [prod.url];
+                const tieneVarias = urls.length > 1;
+                let mediaHTML = '<div class="producto-galeria">';
+                urls.forEach((url, i) => {
+                    if (prod.tipo === 'video') {
+                        mediaHTML += `<video class="producto-media ${i === 0? 'active' : ''}" controls><source src="${url}" type="video/mp4"></video>`;
+                    } else {
+                        mediaHTML += `<img class="producto-media ${i === 0? 'active' : ''}" src="${url}" alt="${prod.nombre}" onclick="abrirLightbox([${urls.map(u => `'${u}'`).join(',')}], ${i})" style="cursor: zoom-in;" onerror="this.src='https://via.placeholder.com/280x280/f8bbd0/fff?text=Sin+Imagen'">`;
+                    }
+                });
+                if (tieneVarias) {
+                    mediaHTML += '<button class="galeria-flecha izq" onclick="cambiarFoto(this, -1)">‹</button>';
+                    mediaHTML += '<button class="galeria-flecha der" onclick="cambiarFoto(this, 1)">›</button>';
+                    mediaHTML += '<div class="galeria-dots">';
+                    urls.forEach((_, i) => {
+                        mediaHTML += `<span class="galeria-dot ${i === 0? 'active' : ''}" onclick="irAFoto(this, ${i})"></span>`;
+                    });
+                    mediaHTML += '</div>';
+                }
+                mediaHTML += '</div>';
+                const enCarrito = carrito.find(item => item.index === index);
+                const stockDisponible = prod.stock || 0;
+                const sinStock = stockDisponible <= 0;
+                const descripcionHTML = prod.descripcion? `<div class="producto-descripcion">${prod.descripcion}</div>` : '';
+                card.innerHTML = `<button class="delete-btn" onclick="eliminarProducto(${index})">×</button>${mediaHTML}<div class="producto-info"><div class="producto-nombre">${prod.nombre}</div>${descripcionHTML}<div class="producto-precio">Bs. ${prod.precio}</div><div class="producto-stock ${sinStock? 'sin-stock' : ''}">${sinStock? 'Sin stock' : `Stock: ${stockDisponible} disponibles`}</div><button class="btn-agregar ${enCarrito? 'agregado' : ''}" onclick="agregarAlCarrito(${index})" ${sinStock? 'disabled' : ''}>${sinStock? 'Sin stock' : (enCarrito? `✓ En carrito (${enCarrito.cantidad})` : '+ Agregar')}</button></div>`;
+                grid.appendChild(card);
+            });
+        }
+
+        function cambiarFoto(btn, direccion) {
+            const galeria = btn.closest('.producto-galeria');
+            const medias = galeria.querySelectorAll('.producto-media');
+            const dots = galeria.querySelectorAll('.galeria-dot');
+            let actual = Array.from(medias).findIndex(m => m.classList.contains('active'));
+            if(medias[actual].tagName === 'VIDEO') medias[actual].pause();
+            medias[actual].classList.remove('active');
+            if (dots.length) dots[actual].classList.remove('active');
+            actual = (actual + direccion + medias.length) % medias.length;
+            medias[actual].classList.add('active');
+            if (dots.length) dots[actual].classList.add('active');
+        }
+
+        function irAFoto(dot, indice) {
+            const galeria = dot.closest('.producto-galeria');
+            const medias = galeria.querySelectorAll('.producto-media');
+            const dots = galeria.querySelectorAll('.galeria-dot');
+            medias.forEach((m, i) => {
+                m.classList.remove('active');
+                if(m.tagName === 'VIDEO') m.pause();
+            });
+            dots.forEach(d => d.classList.remove('active'));
+            medias[indice].classList.add('active');
+            dots[indice].classList.add('active');
+        }
+
+        function eliminarProducto(index) {
+            if(!validarAdmin()) return;
+            if (confirm('¿Eliminar este producto del catálogo?')) {
+                const productos = JSON.parse(localStorage.getItem('productos') || '[]');
+                productos.splice(index, 1);
+                localStorage.setItem('productos', JSON.stringify(productos));
+                carrito = carrito.filter(item => item.index!== index);
+                carrito.forEach(item => {
+                    if (item.index > index) item.index--;
+                });
+                localStorage.setItem('carrito', JSON.stringify(carrito));
+                cargarProductos();
+                actualizarCarrito();
+            }
+        }
+
+        function limpiarCatalogo() {
+            if(!validarAdmin()) return;
+            if (confirm('¿Borrar TODOS los productos? No se puede deshacer.')) {
+                localStorage.removeItem('productos');
+                localStorage.removeItem('carrito');
+                carrito = [];
+                cargarProductos();
+                actualizarCarrito();
+            }
+        }
+
+        function agregarAlCarrito(index) {
+            const productos = JSON.parse(localStorage.getItem('productos') || '[]');
+            const prod = productos[index];
+            if (!prod.stock || prod.stock <= 0) {
+                alert('Este producto no tiene stock disponible');
+                return;
+            }
+            const existe = carrito.find(item => item.index === index);
+            if (existe) {
+                if (existe.cantidad >= prod.stock) {
+                    alert('No hay más stock disponible de este producto');
+                    return;
+                }
+                existe.cantidad++;
+            } else {
+                carrito.push({...prod, index, cantidad: 1 });
+            }
+            prod.stock--;
+            productos[index] = prod;
+            localStorage.setItem('productos', JSON.stringify(productos));
+            localStorage.setItem('carrito', JSON.stringify(carrito));
+            actualizarCarrito();
+            cargarProductos();
+        }
+
+        function cambiarCantidad(index, delta) {
+            const productos = JSON.parse(localStorage.getItem('productos') || '[]');
+            const item = carrito[index];
+            const prod = productos[item.index];
+            if (delta > 0 && (!prod.stock || prod.stock <= 0)) {
+                alert('No hay más stock disponible');
+                return;
+            }
+            item.cantidad += delta;
+            if (delta > 0) {
+                prod.stock--;
+            } else {
+                prod.stock++;
+            }
+            if (item.cantidad <= 0) {
+                carrito.splice(index, 1);
+            }
+            productos[item.index] = prod;
+            localStorage.setItem('productos', JSON.stringify(productos));
+            localStorage.setItem('carrito', JSON.stringify(carrito));
+            actualizarCarrito();
+            cargarProductos();
+        }
+
+        function eliminarDelCarrito(i) {
+            const productos = JSON.parse(localStorage.getItem('productos') || '[]');
+            const item = carrito[i];
+            const prod = productos[item.index];
+            if(prod) {
+                prod.stock += item.cantidad;
+                productos[item.index] = prod;
+                localStorage.setItem('productos', JSON.stringify(productos));
+            }
+            carrito.splice(i, 1);
+            localStorage.setItem('carrito', JSON.stringify(carrito));
+            actualizarCarrito();
+            cargarProductos();
+        }
+
+        function vaciarCarrito() {
+            if (carrito.length === 0) {
+                alert('El carrito ya está vacío');
+                return;
+            }
+            if (confirm('¿Vaciar todo el carrito? Se elimin
 <body>
     <div class="header-container"><div class="header-logo"><img src="https://drive.google.com/thumbnail?id=1KjnZFq73fVtcJCpujO0Bfbcw-hS3D54J&sz=w1920" alt="Banner Todo para tus uñas"></div></div>
     <div class="banner-secundario"><img src="https://drive.google.com/thumbnail?id=1uZ4L0fhQlnULPaMtyDYD5YbAIT7EamwU&sz=w1920" alt="Info productos"></div>
