@@ -512,7 +512,13 @@
         </div>
         <script async src="https://www.instagram.com/embed.js"></script>
     </div>
-    <div class="catalogo"><div class="catalogo-container"><div class="catalogo-header"><h2>Nuestro Catálogo</h2><p>Seleccioná los productos que te gustan y armá tu pedido</p></div><div class="catalogo-grid" id="catalogoGrid"></div></div></div>
+    <div class="catalogo-header">
+    <h2>Nuestro Catálogo</h2>
+    <p>Seleccioná los productos que te gustan y armá tu pedido</p>
+    <button class="btn-filtro-stock" id="btnFiltroStock" onclick="toggleFiltroStock()">
+        👁️ Ocultar productos sin stock
+    </button>
+</div>
     <button class="carrito-btn" onclick="toggleCarrito()">🛒 Mi Pedido <span class="carrito-count" id="carritoCount">0</span></button>
     <div class="carrito-modal" id="carritoModal"><div class="carrito-contenido"><div class="carrito-header"><h3>Mi Pedido</h3><button class="cerrar-carrito" onclick="toggleCarrito()">×</button></div><div id="carritoItems"></div><div class="notas-container"><label for="notasPedido">Notas para tu pedido (opcional):</label><textarea id="notasPedido" placeholder="Ej: Acrílico rosa en tono claro, pincel número 8, etc."></textarea></div><div class="carrito-total" id="carritoTotal"></div><button class="btn-vaciar" onclick="vaciarCarrito()">🗑️ Vaciar carrito</button><button class="btn-whatsapp" onclick="enviarWhatsApp()">📱 Enviar pedido por WhatsApp</button></div></div>
     <button class="admin-toggle" onclick="toggleAdmin()">⚙️ Modo Admin</button>
