@@ -173,6 +173,16 @@
         .lightbox-cerrar { top: 10px; right: 10px; }
         }
         @media (max-width: 600px) {.reel-item { flex: 1 1 100%; width: 100%; }.reels-container { padding: 30px 10px; }.catalogo-grid { grid-template-columns: 1fr; gap: 15px; }.admin-panel { width: calc(100% - 40px); right: 20px; }.catalogo-header h2 { font-size: 32px; }.carrito-contenido { width: 95%; padding: 20px; } }
+   .producto-descripcion {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 8px;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
     </style>
 </head>
 <body>
@@ -323,6 +333,7 @@
             const urlsTexto = document.getElementById('urlMedia').value.trim();
             const nombre = document.getElementById('nombreProducto').value.trim();
             const precio = document.getElementById('precioProducto').value;
+            const descripcion = document.getElementById('descripcionProducto').value.trim();
             const stock = parseInt(document.getElementById('stockProducto').value) || 0;
 
             if (!urlsTexto ||!nombre ||!precio) {
@@ -337,11 +348,12 @@
             }
 
             const productos = JSON.parse(localStorage.getItem('productos') || '[]');
-            productos.push({ tipo, urls, nombre, precio: parseFloat(precio), stock: stock });
+            productos.push({ tipo, urls, nombre, descripcion, precio: parseFloat(precio), stock: stock });
             localStorage.setItem('productos', JSON.stringify(productos));
 
             document.getElementById('urlMedia').value = '';
             document.getElementById('nombreProducto').value = '';
+            document.getElementById('descripcionProducto').value = '';
             document.getElementById('precioProducto').value = '';
             document.getElementById('stockProducto').value = '10';
             cargarProductos();
@@ -385,8 +397,8 @@
                 const stockDisponible = prod.stock || 0;
                 const sinStock = stockDisponible <= 0;
 
-                card.innerHTML = `<button class="delete-btn" onclick="eliminarProducto(${index})">×</button>${mediaHTML}<div class="producto-info"><div class="producto-nombre">${prod.nombre}</div><div class="producto-precio">Bs. ${prod.precio}</div><div class="producto-stock ${sinStock? 'sin-stock' : ''}">${sinStock? 'Sin stock' : `Stock: ${stockDisponible} disponibles`}</div><button class="btn-agregar ${enCarrito? 'agregado' : ''}" onclick="agregarAlCarrito(${index})" ${sinStock? 'disabled' : ''}>${sinStock? 'Sin stock' : (enCarrito? `✓ En carrito (${enCarrito.cantidad})` : '+ Agregar')}</button></div>`;
-                grid.appendChild(card);
+                const descripcionHTML = prod.descripcion ? `<div class="producto-descripcion" style="font-size: 13px; color: #666; margin-bottom: 8px; min-height: 18px;">${prod.descripcion}</div>` : '';
+                card.innerHTML = `<button class="delete-btn" onclick="eliminarProducto(${index})">×</button>${mediaHTML}<div class="producto-info"><div class="producto-nombre">${prod.nombre}</div>${descripcionHTML}<div class="producto-precio">Bs. ${prod.precio}</div><div class="producto-stock ${sinStock? 'sin-stock' : ''}">${sinStock? 'Sin stock' : `Stock: ${stockDisponible} disponibles`}</div><button class="btn-agregar ${enCarrito? 'agregado' : ''}" onclick="agregarAlCarrito(${index})" ${sinStock? 'disabled' : ''}>${sinStock? 'Sin stock' : (enCarrito? `✓ En carrito (${enCarrito.cantidad})` : '+ Agregar')}</button></div>`;
             });
         }
 
