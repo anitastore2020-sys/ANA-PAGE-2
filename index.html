@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<!-- v1.11.1-cart-close-mandatory-store -->
+<!-- v1.11.2-export-import -->
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Galería de Productos Editable</title>
@@ -326,7 +326,6 @@
   }
   .cart.open { right: 0; }
   
-  /* NUEVO: Overlay para cerrar el carrito al hacer clic fuera */
   .cart-overlay {
     position: fixed;
     top: 0; left: 0;
@@ -351,7 +350,6 @@
     position: relative;
   }
   
-  /* NUEVO: Botón X para cerrar el carrito */
   .cart-close-btn {
     position: absolute;
     top: 12px;
@@ -382,10 +380,9 @@
     margin-bottom: 12px;
     color: var(--ink);
     text-align: center;
-    padding-right: 30px; /* espacio para el botón X */
+    padding-right: 30px;
   }
   
-  /* CAMBIO: Label "Nombre de tu tienda" */
   .cart-identifier-group {
     position: relative;
   }
@@ -421,7 +418,6 @@
     font-style: italic;
   }
   
-  /* NUEVO: Mensaje de obligatorio */
   .cart-identifier-warning {
     display: block;
     font-size: 0.72rem;
@@ -820,6 +816,10 @@
         <button id="adminLoginBtn" class="btn btn-secondary">🔐 Admin</button>
         <button id="openAddBtn" class="btn btn-primary admin-only">+ Agregar Producto</button>
         <button id="addVideoBtn" class="btn btn-accent admin-only">🎬 Agregar Video</button>
+        <!-- NUEVO: Botones Exportar/Importar (solo admin) -->
+        <button id="exportBtn" class="btn btn-secondary admin-only" title="Descargar productos y videos">📥 Exportar</button>
+        <button id="importBtn" class="btn btn-secondary admin-only" title="Cargar productos desde archivo">📤 Importar</button>
+        <input type="file" id="importFile" accept=".json" style="display:none;">
         <button id="cartBtn" class="btn btn-accent">Carrito (<span id="cartCount">0</span>)</button>
       </div>
     </div>
@@ -832,10 +832,8 @@
   <div id="productsContainer"></div>
 </div>
 
-<!-- NUEVO: Overlay para cerrar carrito al hacer clic fuera -->
 <div class="cart-overlay" id="cartOverlay"></div>
 
-<!-- CARRITO -->
 <div class="cart" id="cartPanel">
   <div class="cart-header">
     <button class="cart-close-btn" onclick="closeCart()" aria-label="Cerrar carrito" title="Cerrar carrito">×</button>
@@ -1022,7 +1020,6 @@ document.getElementById('adminLoginForm').addEventListener('submit', (e) => {
   loginAdmin(document.getElementById('adminPassword').value);
 });
 
-// ====== CARRITO: Abrir/Cerrar ======
 function openCart() {
   document.getElementById('cartPanel').classList.add('open');
   document.getElementById('cartOverlay').classList.add('active');
@@ -1034,10 +1031,8 @@ function closeCart() {
   document.getElementById('cartOverlay').classList.remove('active');
 }
 
-// Cerrar carrito al hacer clic en el overlay
 document.getElementById('cartOverlay').addEventListener('click', closeCart);
 
-// Cerrar carrito con tecla Escape
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     closeCart();
@@ -1052,7 +1047,6 @@ function loadCartIdentifier() {
 function saveCartIdentifier() {
   const value = document.getElementById('cartIdentifier').value.trim();
   localStorage.setItem('cartIdentifier_v1', value);
-  // Quitar estilo de error al escribir
   document.getElementById('cartIdentifier').classList.remove('error');
 }
 
@@ -1447,7 +1441,6 @@ function addToCart(id) {
   renderProducts();
   updateCartCount();
   
-  // Abrir carrito automáticamente al agregar
   openCart();
 }
 
@@ -1599,13 +1592,11 @@ function removeFromCart(index) {
   updateCartCount();
 }
 
-// CAMBIO: Validación del campo "Nombre de tu tienda"
 function sendToWhatsapp() {
   if (cart.length === 0) return alert("El carrito está vacío");
 
   const identifier = document.getElementById('cartIdentifier').value.trim();
   
-  // VALIDACIÓN: el campo es obligatorio
   if (!identifier) {
     const input = document.getElementById('cartIdentifier');
     input.classList.add('error');
@@ -1674,7 +1665,6 @@ function sendToWhatsapp() {
   const phone = "59163882223";
   window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, "_blank");
   
-  // Cerrar carrito después de enviar
   setTimeout(() => {
     closeCart();
   }, 500);
@@ -1803,7 +1793,6 @@ function editVideo(id) {
   document.getElementById('videoDialog').showModal();
 }
 
-// Ya estaba implementado: eliminar videos en modo admin
 function deleteVideo(id) {
   if (!adminMode) { alert('⚠️ No autorizado'); return; }
   if (confirm("¿Eliminar este video permanentemente?")) {
@@ -1813,7 +1802,6 @@ function deleteVideo(id) {
   }
 }
 
-// Botón del carrito alterna abrir/cerrar
 document.getElementById('cartBtn').addEventListener('click', () => {
   const cartPanel = document.getElementById('cartPanel');
   if (cartPanel.classList.contains('open')) {
@@ -1822,6 +1810,138 @@ document.getElementById('cartBtn').addEventListener('click', () => {
     openCart();
   }
 });
+
+// ================================================================
+// 🆕 NUEVO: FUNCIONES EXPORTAR / IMPORTAR (v1.11.2)
+// ================================================================
+
+// EXPORTAR: Descarga productos + videos como archivo .json
+function exportData() {
+  if (!adminMode) { alert('⚠️ Debes iniciar sesión como admin'); return; }
+  
+  if (products.length === 0 && featuredVideos.length === 0) {
+    alert('⚠️ No hay productos ni videos para exportar');
+    return;
+  }
+  
+  const data = {
+    version: '1.0',
+    exportedAt: new Date().toISOString(),
+    products: products,
+    videos: featuredVideos
+  };
+  
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  
+  const a = document.createElement('a');
+  const fecha = new Date().toISOString().split('T')[0];
+  a.href = url;
+  a.download = `galeria-${fecha}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  alert(`✅ ¡Exportado con éxito!\n\n📦 ${products.length} productos\n🎬 ${featuredVideos.length} videos\n\nGuardá este archivo y pasalo junto con el link de la página.`);
+}
+
+// IMPORTAR: Abre el selector de archivos
+function triggerImport() {
+  if (!adminMode) { alert('⚠️ Debes iniciar sesión como admin'); return; }
+  document.getElementById('importFile').click();
+}
+
+// IMPORTAR: Procesa el archivo .json y hace MERGE
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      
+      // Validar estructura del archivo
+      if (!data.products || !Array.isArray(data.products)) {
+        throw new Error('Formato inválido');
+      }
+      
+      const importedProducts = data.products || [];
+      const importedVideos = data.videos || [];
+      
+      // Confirmación con el usuario
+      const msg = `📦 Archivo encontrado:\n\n` +
+                  `• ${importedProducts.length} productos\n` +
+                  `• ${importedVideos.length} videos\n\n` +
+                  `Tu tienda actual tiene:\n` +
+                  `• ${products.length} productos\n` +
+                  `• ${featuredVideos.length} videos\n\n` +
+                  `¿Qué querés hacer?\n\n` +
+                  `✅ ACEPTAR = Agregar los nuevos (conserva los actuales)\n` +
+                  `❌ CANCELAR = No hace nada`;
+      
+      if (!confirm(msg)) {
+        event.target.value = '';
+        return;
+      }
+      
+      // Preguntar si quiere REEMPLAZAR o AGREGAR
+      const replace = confirm(
+        `⚠️ IMPORTANTE:\n\n` +
+        `Aceptar = AGREGA los productos nuevos a los que ya tenés\n` +
+        `Cancelar = REEMPLAZA todos los productos por los del archivo\n\n` +
+        `¿Querés REEMPLAZAR todo?`
+      );
+      
+      if (replace) {
+        // REEMPLAZAR
+        products = importedProducts;
+        featuredVideos = importedVideos;
+      } else {
+        // MERGE: agregar solo los que no existen (por ID)
+        const existingIds = new Set(products.map(p => p.id));
+        const newProducts = importedProducts.filter(p => !existingIds.has(p.id));
+        products = [...products, ...newProducts];
+        
+        const existingVideoIds = new Set(featuredVideos.map(v => v.id));
+        const newVideos = importedVideos.filter(v => !existingVideoIds.has(v.id));
+        featuredVideos = [...featuredVideos, ...newVideos];
+      }
+      
+      // Guardar en localStorage
+      localStorage.setItem('products_v26', JSON.stringify(products));
+      localStorage.setItem('featuredVideos_v1', JSON.stringify(featuredVideos));
+      
+      // Actualizar UI
+      renderProducts();
+      renderFeaturedVideos();
+      updateCartCount();
+      
+      alert(`✅ ¡Importación exitosa!\n\n` +
+            `Ahora tenés:\n` +
+            `📦 ${products.length} productos\n` +
+            `🎬 ${featuredVideos.length} videos`);
+      
+    } catch (err) {
+      alert('❌ Error al leer el archivo.\n\nAsegurate de que sea un archivo .json válido exportado desde esta página.\n\nDetalle: ' + err.message);
+    }
+    
+    // Resetear input para poder importar el mismo archivo de nuevo si es necesario
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+// Conectar botones
+document.getElementById('exportBtn').addEventListener('click', exportData);
+document.getElementById('importBtn').addEventListener('click', triggerImport);
+document.getElementById('importFile').addEventListener('change', importData);
+
+// ================================================================
+// FIN - FUNCIONES EXPORTAR / IMPORTAR
+// ================================================================
 
 updateAdminUI();
 loadCartIdentifier();
