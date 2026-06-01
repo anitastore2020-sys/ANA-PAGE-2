@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<!-- v1.11.0-cart-notes-identifier -->
+<!-- v1.11.1-cart-close-mandatory-store -->
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Galería de Productos Editable</title>
@@ -309,7 +309,7 @@
   .admin-only { display: none; }
   .admin-on .admin-only { display: inline-block !important; }
 
-  /* Carrito */
+  /* ====== CARRITO ====== */
   .cart {
     position: fixed;
     right: -100%;
@@ -326,11 +326,55 @@
   }
   .cart.open { right: 0; }
   
-  /* ====== NUEVO: Estilos para el carrito mejorado ====== */
+  /* NUEVO: Overlay para cerrar el carrito al hacer clic fuera */
+  .cart-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100vh;
+    background: rgba(34, 22, 26, 0.5);
+    backdrop-filter: blur(3px);
+    z-index: 250;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  .cart-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+  
   .cart-header {
     padding: 20px;
     border-bottom: 1px solid #ddd;
     background: linear-gradient(135deg, rgba(159,18,57,0.04), rgba(190,24,93,0.06));
+    position: relative;
+  }
+  
+  /* NUEVO: Botón X para cerrar el carrito */
+  .cart-close-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: rgba(159, 18, 57, 0.1);
+    color: var(--accent);
+    border-radius: 50%;
+    font-size: 1.3rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, transform 0.2s;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .cart-close-btn:hover {
+    background: var(--accent);
+    color: white;
+    transform: rotate(90deg);
   }
   
   .cart-header h2 {
@@ -338,18 +382,19 @@
     margin-bottom: 12px;
     color: var(--ink);
     text-align: center;
+    padding-right: 30px; /* espacio para el botón X */
   }
   
-  /* Identificador del pedido */
+  /* CAMBIO: Label "Nombre de tu tienda" */
   .cart-identifier-group {
     position: relative;
   }
   
   .cart-identifier-label {
     display: block;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     color: var(--accent);
-    font-weight: 600;
+    font-weight: 700;
     margin-bottom: 6px;
     text-align: center;
   }
@@ -376,7 +421,29 @@
     font-style: italic;
   }
   
-  /* Items del carrito */
+  /* NUEVO: Mensaje de obligatorio */
+  .cart-identifier-warning {
+    display: block;
+    font-size: 0.72rem;
+    color: #c02639;
+    font-weight: 600;
+    margin-top: 5px;
+    text-align: center;
+    line-height: 1.3;
+  }
+  
+  .cart-identifier-input.error {
+    border-color: #c02639;
+    background: #fff5f5;
+    animation: shake 0.4s;
+  }
+  
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+  
   .cart-items-container {
     flex: 1;
     padding: 15px 20px;
@@ -417,7 +484,6 @@
     min-width: 80px;
   }
   
-  /* NUEVO: Campo de notas por producto */
   .cart-item-notes {
     margin-top: 10px;
     position: relative;
@@ -477,7 +543,6 @@
     gap: 4px;
   }
   
-  /* Footer del carrito */
   .cart-footer {
     padding: 20px;
     border-top: 1px solid #ddd;
@@ -738,6 +803,7 @@
     .cart-item-img { width: 70px; height: 70px; }
     .cart-item-main { gap: 10px; }
     .cart-identifier-input { font-size: 16px; }
+    .cart-identifier-warning { font-size: 0.68rem; }
   }
 </style>
 </head>
@@ -766,21 +832,29 @@
   <div id="productsContainer"></div>
 </div>
 
-<!-- CARRITO MEJORADO -->
+<!-- NUEVO: Overlay para cerrar carrito al hacer clic fuera -->
+<div class="cart-overlay" id="cartOverlay"></div>
+
+<!-- CARRITO -->
 <div class="cart" id="cartPanel">
   <div class="cart-header">
+    <button class="cart-close-btn" onclick="closeCart()" aria-label="Cerrar carrito" title="Cerrar carrito">×</button>
     <h2>🛍️ Tu Pedido</h2>
     <div class="cart-identifier-group">
       <label class="cart-identifier-label" for="cartIdentifier">
-        👤 Identificador del pedido (nombre, SPA, etc.)
+        🏪 Pon el nombre de tu tienda
       </label>
       <input 
         type="text" 
         id="cartIdentifier" 
         class="cart-identifier-input"
-        placeholder="Ej: María Pérez, SPA Luna, Pedido #5..."
+        placeholder="Ej: SPA Luna, Boutique María, Tienda Central..."
         maxlength="60"
+        required
       >
+      <span class="cart-identifier-warning">
+        ⚠️ Si no completas este campo no podrás hacer el pedido
+      </span>
     </div>
   </div>
   
@@ -948,7 +1022,28 @@ document.getElementById('adminLoginForm').addEventListener('submit', (e) => {
   loginAdmin(document.getElementById('adminPassword').value);
 });
 
-// ====== NUEVO: Manejo del identificador del pedido ======
+// ====== CARRITO: Abrir/Cerrar ======
+function openCart() {
+  document.getElementById('cartPanel').classList.add('open');
+  document.getElementById('cartOverlay').classList.add('active');
+  renderCart();
+}
+
+function closeCart() {
+  document.getElementById('cartPanel').classList.remove('open');
+  document.getElementById('cartOverlay').classList.remove('active');
+}
+
+// Cerrar carrito al hacer clic en el overlay
+document.getElementById('cartOverlay').addEventListener('click', closeCart);
+
+// Cerrar carrito con tecla Escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeCart();
+  }
+});
+
 function loadCartIdentifier() {
   const saved = localStorage.getItem('cartIdentifier_v1') || '';
   document.getElementById('cartIdentifier').value = saved;
@@ -957,6 +1052,8 @@ function loadCartIdentifier() {
 function saveCartIdentifier() {
   const value = document.getElementById('cartIdentifier').value.trim();
   localStorage.setItem('cartIdentifier_v1', value);
+  // Quitar estilo de error al escribir
+  document.getElementById('cartIdentifier').classList.remove('error');
 }
 
 document.getElementById('cartIdentifier').addEventListener('input', saveCartIdentifier);
@@ -1349,8 +1446,9 @@ function addToCart(id) {
 
   renderProducts();
   updateCartCount();
-  document.getElementById('cartPanel').classList.add('open');
-  renderCart();
+  
+  // Abrir carrito automáticamente al agregar
+  openCart();
 }
 
 function updateCartCount() {
@@ -1358,7 +1456,6 @@ function updateCartCount() {
   document.getElementById('cartCount').textContent = count;
 }
 
-// ====== MODIFICADO: renderCart ahora incluye campo de notas por producto ======
 function renderCart() {
   const container = document.getElementById('cartItems');
   let total = 0;
@@ -1386,9 +1483,6 @@ function renderCart() {
       ? `<span style="text-decoration:line-through;color:var(--muted);font-size:0.8rem;">${item.price.toFixed(2)}</span> <strong style="color:var(--accent2);">${unitPrice.toFixed(2)}</strong> Bs c/u`
       : `${unitPrice.toFixed(2)} Bs c/u`;
     
-    // Escapar comillas dobles para atributos HTML
-    const escapedNotes = (item.notes || '').replace(/"/g, '&quot;');
-    
     html += `
       <div class="cart-item">
         <div class="cart-item-main">
@@ -1408,7 +1502,6 @@ function renderCart() {
           </div>
         </div>
         
-        <!-- NUEVO: Campo de notas -->
         <div class="cart-item-notes">
           <button type="button" class="cart-notes-toggle" onclick="toggleNotes(${index})">
             ✏️ <span id="notesLabel-${index}">${item.notes ? 'Editar detalle' : 'Agregar detalle (color, talla...)'}</span>
@@ -1432,7 +1525,6 @@ function renderCart() {
   document.getElementById('cartTotal').textContent = total.toFixed(2);
 }
 
-// ====== NUEVO: Funciones para manejar notas por producto ======
 function toggleNotes(index) {
   const textarea = document.getElementById(`notes-${index}`);
   const label = document.getElementById(`notesLabel-${index}`);
@@ -1507,20 +1599,25 @@ function removeFromCart(index) {
   updateCartCount();
 }
 
-// ====== MODIFICADO: sendToWhatsapp incluye identificador + notas, y auto-cierra carrito ======
+// CAMBIO: Validación del campo "Nombre de tu tienda"
 function sendToWhatsapp() {
   if (cart.length === 0) return alert("El carrito está vacío");
 
   const identifier = document.getElementById('cartIdentifier').value.trim();
   
+  // VALIDACIÓN: el campo es obligatorio
+  if (!identifier) {
+    const input = document.getElementById('cartIdentifier');
+    input.classList.add('error');
+    input.focus();
+    alert("⚠️ Por favor completa el nombre de tu tienda antes de enviar el pedido.");
+    return;
+  }
+  
   let total = 0;
   let totalSavings = 0;
   let text = `🛍️ *NUEVO PEDIDO* 🛍️\n\n`;
-  
-  // Identificador del pedido si existe
-  if (identifier) {
-    text += `👤 *Cliente/Pedido:* ${identifier}\n\n`;
-  }
+  text += `🏪 *Tienda:* ${identifier}\n\n`;
   
   text += `📅 _Fecha: ${new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}_\n`;
   text += `⏰ _Hora: ${new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}_\n\n`;
@@ -1537,7 +1634,6 @@ function sendToWhatsapp() {
     text += `*${num}. ${item.title}*\n`;
     if (item.category) text += `🏷️ _Categoría: ${item.category}_\n`;
     
-    // NUEVO: Mostrar notas del producto si existen
     if (item.notes && item.notes.trim() !== '') {
       text += `📝 *Detalle:* _${item.notes.trim()}_\n`;
     }
@@ -1578,9 +1674,9 @@ function sendToWhatsapp() {
   const phone = "59163882223";
   window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, "_blank");
   
-  // NUEVO: Auto-cerrar el carrito después de enviar
+  // Cerrar carrito después de enviar
   setTimeout(() => {
-    document.getElementById('cartPanel').classList.remove('open');
+    closeCart();
   }, 500);
 }
 
@@ -1655,6 +1751,7 @@ function deleteProduct(id) {
     localStorage.setItem('products_v26', JSON.stringify(products));
     localStorage.setItem('cart_v26', JSON.stringify(cart));
     renderProducts();
+    updateCartCount();
   }
 }
 
@@ -1706,6 +1803,7 @@ function editVideo(id) {
   document.getElementById('videoDialog').showModal();
 }
 
+// Ya estaba implementado: eliminar videos en modo admin
 function deleteVideo(id) {
   if (!adminMode) { alert('⚠️ No autorizado'); return; }
   if (confirm("¿Eliminar este video permanentemente?")) {
@@ -1715,9 +1813,14 @@ function deleteVideo(id) {
   }
 }
 
+// Botón del carrito alterna abrir/cerrar
 document.getElementById('cartBtn').addEventListener('click', () => {
-  document.getElementById('cartPanel').classList.toggle('open');
-  renderCart();
+  const cartPanel = document.getElementById('cartPanel');
+  if (cartPanel.classList.contains('open')) {
+    closeCart();
+  } else {
+    openCart();
+  }
 });
 
 updateAdminUI();
@@ -1725,6 +1828,7 @@ loadCartIdentifier();
 updateCategorySuggestions();
 renderProducts();
 renderFeaturedVideos();
+updateCartCount();
 </script>
 
 </body>
