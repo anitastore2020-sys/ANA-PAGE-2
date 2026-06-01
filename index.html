@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<!-- v1.10.0-all-video-platforms -->
+<!-- v1.10.1-clean-videos -->
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Galería de Productos Editable</title>
@@ -137,20 +137,6 @@
     pointer-events: none;
   }
   .video-media:hover::after { opacity: 1; }
-  
-  .video-badge {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    padding: 6px 12px;
-    border-radius: 30px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    color: white;
-    z-index: 2;
-    letter-spacing: 0.5px;
-  }
 
   .video-body { padding: 18px; }
   .video-title { font-size: 1.25rem; margin-bottom: 8px; font-weight: 700; }
@@ -713,7 +699,7 @@
 </dialog>
 
 <script>
-const ADMIN_PASSWORD_HASH = 2000292881; // ANA1234
+const ADMIN_PASSWORD_HASH = 2000292881;
 
 function simpleHash(str) {
   let hash = 0;
@@ -786,18 +772,15 @@ document.getElementById('adminLoginForm').addEventListener('submit', (e) => {
   loginAdmin(document.getElementById('adminPassword').value);
 });
 
-// ==================== DETECCIÓN DE PLATAFORMAS ====================
 function getVideoPlatform(url) {
   if (!url) return null;
   const lower = url.toLowerCase();
-  
   if (lower.includes('youtube.com') || lower.includes('youtu.be')) return 'youtube';
   if (lower.includes('instagram.com')) return 'instagram';
   if (lower.includes('tiktok.com')) return 'tiktok';
   if (lower.includes('vimeo.com')) return 'vimeo';
   if (lower.includes('drive.google.com')) return 'drive';
   if (/\.(mp4|webm|ogg|mov)(\?|$)/i.test(url)) return 'direct';
-  
   return 'unknown';
 }
 
@@ -807,13 +790,11 @@ function getYoutubeId(url) {
 }
 
 function getInstagramInfo(url) {
-  // Instagram: /p/CODIGO/ (post), /reel/CODIGO/ (reel), /tv/CODIGO/ (IGTV)
   const match = url.match(/instagram\.com\/(?:p|reel|tv)\/([-\w]+)/);
   return match ? match[1] : null;
 }
 
 function getTikTokInfo(url) {
-  // TikTok: /video/CODIGO o /@usuario/video/CODIGO
   const match = url.match(/tiktok\.com\/(?:@[\w.-]+\/video\/|video\/)(\d+)/);
   return match ? match[1] : null;
 }
@@ -840,76 +821,54 @@ function getDriveId(url) {
   return null;
 }
 
-function getDriveThumbnailUrl(id) {
-  return `https://drive.google.com/thumbnail?id=${id}&sz=w800`;
-}
-
-// Thumbnails
 function getVideoThumbnail(url) {
   const platform = getVideoPlatform(url);
-  
   switch(platform) {
     case 'youtube':
       const ytId = getYoutubeId(url);
       return ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null;
-    
     case 'instagram':
-      // Instagram no tiene thumbnail público fácil, usamos un placeholder
       return 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="300"%3E%3Crect fill="%23E1306C" width="300" height="300"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="24" font-family="Arial"%3E📷 Instagram%3C/text%3E%3C/svg%3E';
-    
     case 'tiktok':
       return 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="300"%3E%3Crect fill="%23000" width="300" height="300"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="24" font-family="Arial"%3E🎵 TikTok%3C/text%3E%3C/svg%3E';
-    
     case 'vimeo':
       const vimeoId = getVimeoId(url);
       return vimeoId ? `https://vumbnail.com/${vimeoId}.jpg` : null;
-    
     case 'drive':
       const driveId = getDriveId(url);
-      return driveId ? getDriveThumbnailUrl(driveId) : null;
-    
+      return driveId ? `https://drive.google.com/thumbnail?id=${driveId}&sz=w800` : null;
     case 'direct':
-      return null; // Video directo no tiene thumbnail
-    
+      return null;
     default:
       return null;
   }
 }
 
-// Embed URLs
 function getVideoEmbedUrl(url) {
   const platform = getVideoPlatform(url);
-  
   switch(platform) {
     case 'youtube':
       const ytId = getYoutubeId(url);
       return ytId ? `https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0` : null;
-    
     case 'instagram':
       const igCode = getInstagramInfo(url);
       return igCode ? `https://www.instagram.com/p/${igCode}/embed` : null;
-    
     case 'tiktok':
       const ttId = getTikTokInfo(url);
       return ttId ? `https://www.tiktok.com/embed/v2/${ttId}` : null;
-    
     case 'vimeo':
       const vimeoId = getVimeoId(url);
       return vimeoId ? `https://player.vimeo.com/video/${vimeoId}?autoplay=1` : null;
-    
     case 'drive':
       const driveId = getDriveId(url);
       return driveId ? `https://drive.google.com/file/d/${driveId}/preview` : null;
-    
     case 'direct':
       return url;
-    
     default:
       return null;
   }
 }
 
-// ==================== UTILIDADES DE IMÁGENES ====================
 function getGiphyDirectUrl(url) {
   if (!url) return null;
   const lower = url.toLowerCase();
@@ -970,7 +929,6 @@ function updateCategorySuggestions() {
   datalist.innerHTML = uniqueCategories.map(cat => `<option value="${cat.replace(/"/g, '&quot;')}">`).join('');
 }
 
-// ==================== RENDER PRODUCTOS ====================
 function renderProducts() {
   const container = document.getElementById('productsContainer');
   container.innerHTML = '';
@@ -1044,7 +1002,7 @@ function renderProducts() {
   updateCategorySuggestions();
 }
 
-// ==================== RENDER VIDEOS ====================
+// CAMBIO: Se quitó el badge de plataforma. Solo se muestra el video limpio.
 function renderFeaturedVideos() {
   const container = document.getElementById('featuredVideosContainer');
   
@@ -1063,16 +1021,7 @@ function renderFeaturedVideos() {
   `;
   
   featuredVideos.forEach(video => {
-    const platform = getVideoPlatform(video.url);
     const thumbnail = getVideoThumbnail(video.url);
-    
-    // Badge de plataforma
-    let badgeText = '▶ VIDEO';
-    if (platform === 'youtube') badgeText = '📺 YouTube';
-    else if (platform === 'instagram') badgeText = '📷 Instagram';
-    else if (platform === 'tiktok') badgeText = '🎵 TikTok';
-    else if (platform === 'vimeo') badgeText = '🎬 Vimeo';
-    else if (platform === 'drive') badgeText = '💾 Drive';
     
     let thumbHtml = '';
     if (thumbnail) {
@@ -1081,11 +1030,11 @@ function renderFeaturedVideos() {
       thumbHtml = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:white;font-size:3rem;">🎬</div>`;
     }
     
+    // SIN BADGE - Solo thumbnail + hover "Ver video"
     html += `
       <div class="video-card">
         <div class="video-media" onclick="openVideoLightbox('${video.id}')">
           ${thumbHtml}
-          <span class="video-badge">${badgeText}</span>
         </div>
         <div class="video-body">
           <h3 class="video-title">${video.title}</h3>
@@ -1103,7 +1052,6 @@ function renderFeaturedVideos() {
   container.innerHTML = html;
 }
 
-// ==================== LIGHTBOX UNIFICADO ====================
 function openMediaModal(productId) {
   const product = products.find(p => p.id === productId);
   if (!product || !product.media || product.media.length === 0) return;
@@ -1144,7 +1092,6 @@ function renderLightboxMedia() {
     const embedUrl = getVideoEmbedUrl(media.url);
     
     if (embedUrl) {
-      // Detectar si es video directo o iframe
       if (media.url.match(/\.(mp4|webm|ogg|mov)(\?|$)/i)) {
         container.innerHTML = `<video src="${media.url}" controls autoplay style="width:100%;height:100%;"></video>`;
       } else {
@@ -1193,7 +1140,6 @@ document.getElementById('mediaModal').addEventListener('close', () => {
   document.getElementById('mediaContainer').innerHTML = '';
 });
 
-// ==================== CARRITO ====================
 function addToCart(id) {
   const product = products.find(p => p.id === id);
   if (!product || product.stock <= 0) return alert("Sin stock disponible");
@@ -1363,7 +1309,6 @@ function sendToWhatsapp() {
   window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, "_blank");
 }
 
-// ==================== ADMIN PRODUCTOS ====================
 document.getElementById('openAddBtn').addEventListener('click', () => {
   if (!adminMode) { alert('⚠️ Debes iniciar sesión primero'); return; }
   editingId = null;
@@ -1438,7 +1383,6 @@ function deleteProduct(id) {
   }
 }
 
-// ==================== ADMIN VIDEOS ====================
 document.getElementById('addVideoBtn').addEventListener('click', () => {
   if (!adminMode) { alert('⚠️ Debes iniciar sesión primero'); return; }
   editingVideoId = null;
