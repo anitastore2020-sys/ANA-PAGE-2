@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<!-- v1.11.2-export-import -->
+<!-- v2.0.0-firebase-realtime -->
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Galería de Productos Editable</title>
@@ -309,7 +309,30 @@
   .admin-only { display: none; }
   .admin-on .admin-only { display: inline-block !important; }
 
-  /* ====== CARRITO ====== */
+  /* Indicador de sincronización */
+  .sync-indicator {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background: white;
+    padding: 10px 16px;
+    border-radius: 50px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    font-size: 0.85rem;
+    font-weight: 600;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .sync-indicator.show { opacity: 1; }
+  .sync-indicator.success { color: #166534; }
+  .sync-indicator.error { color: #c02639; }
+  .sync-indicator.loading { color: var(--accent); }
+
   .cart {
     position: fixed;
     right: -100%;
@@ -383,9 +406,7 @@
     padding-right: 30px;
   }
   
-  .cart-identifier-group {
-    position: relative;
-  }
+  .cart-identifier-group { position: relative; }
   
   .cart-identifier-label {
     display: block;
@@ -499,9 +520,7 @@
     gap: 4px;
   }
   
-  .cart-notes-toggle:hover {
-    color: var(--accent2);
-  }
+  .cart-notes-toggle:hover { color: var(--accent2); }
   
   .cart-notes-input {
     width: 100%;
@@ -816,10 +835,6 @@
         <button id="adminLoginBtn" class="btn btn-secondary">🔐 Admin</button>
         <button id="openAddBtn" class="btn btn-primary admin-only">+ Agregar Producto</button>
         <button id="addVideoBtn" class="btn btn-accent admin-only">🎬 Agregar Video</button>
-        <!-- NUEVO: Botones Exportar/Importar (solo admin) -->
-        <button id="exportBtn" class="btn btn-secondary admin-only" title="Descargar productos y videos">📥 Exportar</button>
-        <button id="importBtn" class="btn btn-secondary admin-only" title="Cargar productos desde archivo">📤 Importar</button>
-        <input type="file" id="importFile" accept=".json" style="display:none;">
         <button id="cartBtn" class="btn btn-accent">Carrito (<span id="cartCount">0</span>)</button>
       </div>
     </div>
@@ -830,6 +845,12 @@
 
   <div id="featuredVideosContainer"></div>
   <div id="productsContainer"></div>
+</div>
+
+<!-- Indicador de sincronización -->
+<div class="sync-indicator" id="syncIndicator">
+  <span id="syncIcon">⏳</span>
+  <span id="syncText">Sincronizando...</span>
 </div>
 
 <div class="cart-overlay" id="cartOverlay"></div>
@@ -946,8 +967,36 @@
   </div>
 </dialog>
 
+<!-- 🔥 FIREBASE SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
 <script>
-const ADMIN_PASSWORD_HASH = 2000292881;
+// ================================================================
+// 🔥 CONFIGURACIÓN DE FIREBASE (tu proyecto)
+// ================================================================
+const firebaseConfig = {
+  apiKey: "AIzaSyBAy8863QMndnkr9Z7cNMF8RTRrkUFJZkQ",
+  authDomain: "mi-catalogo-anitas-store.firebaseapp.com",
+  projectId: "mi-catalogo-anitas-store",
+  storageBucket: "mi-catalogo-anitas-store.firebasestorage.app",
+  messagingSenderId: "846561562506",
+  appId: "1:846561562506:web:dea35c034241421326c273",
+  measurementId: "G-C61TF8NNT8"
+};
+
+// Inicializar Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// Referencias a las colecciones
+const productsRef = db.collection('products');
+const videosRef = db.collection('videos');
+
+// ================================================================
+// SEGURIDAD ADMIN
+// ================================================================
+const ADMIN_PASSWORD_HASH = 2000292881; // ANA1234
 
 function simpleHash(str) {
   let hash = 0;
@@ -958,15 +1007,77 @@ function simpleHash(str) {
 }
 
 let adminMode = sessionStorage.getItem('adminAuthenticated') === 'true';
-let products = JSON.parse(localStorage.getItem('products_v26')) || [];
+let products = [];
+let featuredVideos = [];
 let cart = JSON.parse(localStorage.getItem('cart_v26')) || [];
-let featuredVideos = JSON.parse(localStorage.getItem('featuredVideos_v1')) || [];
 let editingId = null;
 let editingVideoId = null;
 
 let currentMediaList = [];
 let currentMediaIndex = 0;
 
+// ================================================================
+// 🔥 INDICADOR DE SINCRONIZACIÓN
+// ================================================================
+function showSync(message, type = 'loading', duration = 2000) {
+  const indicator = document.getElementById('syncIndicator');
+  const icon = document.getElementById('syncIcon');
+  const text = document.getElementById('syncText');
+  
+  indicator.className = 'sync-indicator show ' + type;
+  text.textContent = message;
+  
+  if (type === 'loading') icon.textContent = '⏳';
+  else if (type === 'success') icon.textContent = '✅';
+  else if (type === 'error') icon.textContent = '❌';
+  
+  if (duration > 0) {
+    setTimeout(() => {
+      indicator.classList.remove('show');
+    }, duration);
+  }
+}
+
+// ================================================================
+// 🔥 ESCUCHAR CAMBIOS EN TIEMPO REAL (PRODUCTOS)
+// ================================================================
+productsRef.onSnapshot((snapshot) => {
+  products = [];
+  snapshot.forEach(doc => {
+    products.push({ id: doc.id, ...doc.data() });
+  });
+  
+  // Ordenar por fecha de creación (más recientes primero)
+  products.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  
+  console.log('📦 Productos actualizados desde la nube:', products.length);
+  renderProducts();
+  updateCartCount();
+}, (error) => {
+  console.error('Error al escuchar productos:', error);
+  showSync('Error al cargar catálogo', 'error', 3000);
+});
+
+// ================================================================
+// 🔥 ESCUCHAR CAMBIOS EN TIEMPO REAL (VIDEOS)
+// ================================================================
+videosRef.onSnapshot((snapshot) => {
+  featuredVideos = [];
+  snapshot.forEach(doc => {
+    featuredVideos.push({ id: doc.id, ...doc.data() });
+  });
+  
+  featuredVideos.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  
+  console.log('🎬 Videos actualizados desde la nube:', featuredVideos.length);
+  renderFeaturedVideos();
+}, (error) => {
+  console.error('Error al escuchar videos:', error);
+});
+
+// ================================================================
+// UI ADMIN
+// ================================================================
 function updateAdminUI() {
   document.body.classList.toggle('admin-on', adminMode);
   const loginBtn = document.getElementById('adminLoginBtn');
@@ -998,6 +1109,7 @@ function loginAdmin(password) {
     renderProducts();
     renderFeaturedVideos();
     closeLoginModal();
+    showSync('Sesión iniciada', 'success', 1500);
     return true;
   } else {
     document.getElementById('loginError').textContent = '❌ Contraseña incorrecta';
@@ -1020,6 +1132,9 @@ document.getElementById('adminLoginForm').addEventListener('submit', (e) => {
   loginAdmin(document.getElementById('adminPassword').value);
 });
 
+// ================================================================
+// CARRITO (local para cada clienta)
+// ================================================================
 function openCart() {
   document.getElementById('cartPanel').classList.add('open');
   document.getElementById('cartOverlay').classList.add('active');
@@ -1034,9 +1149,7 @@ function closeCart() {
 document.getElementById('cartOverlay').addEventListener('click', closeCart);
 
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    closeCart();
-  }
+  if (e.key === 'Escape') closeCart();
 });
 
 function loadCartIdentifier() {
@@ -1052,6 +1165,9 @@ function saveCartIdentifier() {
 
 document.getElementById('cartIdentifier').addEventListener('input', saveCartIdentifier);
 
+// ================================================================
+// UTILIDADES DE LINKS (sin cambios)
+// ================================================================
 function getVideoPlatform(url) {
   if (!url) return null;
   const lower = url.toLowerCase();
@@ -1209,9 +1325,23 @@ function updateCategorySuggestions() {
   datalist.innerHTML = uniqueCategories.map(cat => `<option value="${cat.replace(/"/g, '&quot;')}">`).join('');
 }
 
+// ================================================================
+// RENDER PRODUCTOS (sin cambios visuales)
+// ================================================================
 function renderProducts() {
   const container = document.getElementById('productsContainer');
   container.innerHTML = '';
+
+  if (products.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center; padding:60px 20px; color:var(--muted);">
+        <div style="font-size:3rem; margin-bottom:10px;">📦</div>
+        <p style="font-size:1.2rem;">Aún no hay productos</p>
+        ${adminMode ? '<p style="margin-top:10px;">Hacé clic en "+ Agregar Producto" para comenzar</p>' : ''}
+      </div>
+    `;
+    return;
+  }
 
   const grouped = products.reduce((acc, p) => {
     const cat = (p.category || "Sin categoría").trim();
@@ -1285,7 +1415,7 @@ function renderProducts() {
 function renderFeaturedVideos() {
   const container = document.getElementById('featuredVideosContainer');
   
-  if (featuredVideos.length === 0 && !adminMode) {
+  if (featuredVideos.length === 0) {
     container.innerHTML = '';
     return;
   }
@@ -1330,6 +1460,9 @@ function renderFeaturedVideos() {
   container.innerHTML = html;
 }
 
+// ================================================================
+// LIGHTBOX
+// ================================================================
 function openMediaModal(productId) {
   const product = products.find(p => p.id === productId);
   if (!product || !product.media || product.media.length === 0) return;
@@ -1418,6 +1551,9 @@ document.getElementById('mediaModal').addEventListener('close', () => {
   document.getElementById('mediaContainer').innerHTML = '';
 });
 
+// ================================================================
+// CARRITO (sin cambios)
+// ================================================================
 function addToCart(id) {
   const product = products.find(p => p.id === id);
   if (!product || product.stock <= 0) return alert("Sin stock disponible");
@@ -1433,14 +1569,9 @@ function addToCart(id) {
     cart.push({ ...product, qty: 1, unitPrice, notes: '' });
   }
 
-  product.stock -= 1;
-
-  localStorage.setItem('products_v26', JSON.stringify(products));
   localStorage.setItem('cart_v26', JSON.stringify(cart));
 
-  renderProducts();
   updateCartCount();
-  
   openCart();
 }
 
@@ -1564,31 +1695,20 @@ function changeQty(index, delta) {
   if (newQty <= 0) {
     removeFromCart(index);
   } else {
-    product.stock += item.qty;
     item.qty = newQty;
-    product.stock -= newQty;
     const hasOffer = product.offerPrice > 0 && product.offerPrice < (product.price || 0);
     item.unitPrice = hasOffer ? product.offerPrice : (product.price || 0);
   }
 
-  localStorage.setItem('products_v26', JSON.stringify(products));
   localStorage.setItem('cart_v26', JSON.stringify(cart));
   renderCart();
-  renderProducts();
   updateCartCount();
 }
 
 function removeFromCart(index) {
-  const item = cart[index];
-  const product = products.find(p => p.id === item.id);
-  if (product) product.stock += item.qty;
-
   cart.splice(index, 1);
-
-  localStorage.setItem('products_v26', JSON.stringify(products));
   localStorage.setItem('cart_v26', JSON.stringify(cart));
   renderCart();
-  renderProducts();
   updateCartCount();
 }
 
@@ -1670,6 +1790,9 @@ function sendToWhatsapp() {
   }, 500);
 }
 
+// ================================================================
+// 🔥 ADMIN PRODUCTOS (con Firebase)
+// ================================================================
 document.getElementById('openAddBtn').addEventListener('click', () => {
   if (!adminMode) { alert('⚠️ Debes iniciar sesión primero'); return; }
   editingId = null;
@@ -1679,12 +1802,13 @@ document.getElementById('openAddBtn').addEventListener('click', () => {
   document.getElementById('productDialog').showModal();
 });
 
-document.getElementById('productForm').addEventListener('submit', function(e) {
+document.getElementById('productForm').addEventListener('submit', async function(e) {
   e.preventDefault();
   if (!adminMode) { alert('⚠️ No autorizado'); return; }
   
-  const newProduct = {
-    id: editingId || "prod_" + Date.now(),
+  showSync('Guardando...', 'loading', 0);
+  
+  const productData = {
     title: document.getElementById('title').value.trim(),
     fontStyle: document.getElementById('fontStyle').value,
     category: document.getElementById('category').value.trim(),
@@ -1693,18 +1817,25 @@ document.getElementById('productForm').addEventListener('submit', function(e) {
     wholesalePrice: parseFloat(document.getElementById('wholesalePrice').value) || 0,
     stock: parseInt(document.getElementById('stock').value) || 0,
     description: document.getElementById('description').value.trim(),
-    media: document.getElementById('mediaLinks').value.split('\n').map(l => l.trim()).filter(Boolean)
+    media: document.getElementById('mediaLinks').value.split('\n').map(l => l.trim()).filter(Boolean),
+    updatedAt: Date.now()
   };
 
-  if (editingId) {
-    products = products.map(p => p.id === editingId ? newProduct : p);
-  } else {
-    products.unshift(newProduct);
+  try {
+    if (editingId) {
+      await productsRef.doc(editingId).update(productData);
+      showSync('Producto actualizado ✅', 'success', 2000);
+    } else {
+      productData.createdAt = Date.now();
+      await productsRef.add(productData);
+      showSync('Producto agregado ✅', 'success', 2000);
+    }
+    closeDialog();
+  } catch (error) {
+    console.error('Error al guardar producto:', error);
+    showSync('Error al guardar', 'error', 3000);
+    alert('❌ Error al guardar el producto. Verifica tu conexión a internet.');
   }
-
-  localStorage.setItem('products_v26', JSON.stringify(products));
-  renderProducts();
-  closeDialog();
 });
 
 function closeDialog() {
@@ -1733,18 +1864,23 @@ function editProduct(id) {
   document.getElementById('productDialog').showModal();
 }
 
-function deleteProduct(id) {
+async function deleteProduct(id) {
   if (!adminMode) { alert('⚠️ No autorizado'); return; }
-  if (confirm("¿Eliminar este producto permanentemente?")) {
-    products = products.filter(p => p.id !== id);
-    cart = cart.filter(item => item.id !== id);
-    localStorage.setItem('products_v26', JSON.stringify(products));
-    localStorage.setItem('cart_v26', JSON.stringify(cart));
-    renderProducts();
-    updateCartCount();
+  if (confirm("¿Eliminar este producto permanentemente?\n\nSe eliminará del catálogo de TODAS las clientas.")) {
+    showSync('Eliminando...', 'loading', 0);
+    try {
+      await productsRef.doc(id).delete();
+      showSync('Producto eliminado ✅', 'success', 2000);
+    } catch (error) {
+      console.error('Error al eliminar:', error);
+      showSync('Error al eliminar', 'error', 3000);
+    }
   }
 }
 
+// ================================================================
+// 🔥 ADMIN VIDEOS (con Firebase)
+// ================================================================
 document.getElementById('addVideoBtn').addEventListener('click', () => {
   if (!adminMode) { alert('⚠️ Debes iniciar sesión primero'); return; }
   editingVideoId = null;
@@ -1753,26 +1889,34 @@ document.getElementById('addVideoBtn').addEventListener('click', () => {
   document.getElementById('videoDialog').showModal();
 });
 
-document.getElementById('videoForm').addEventListener('submit', function(e) {
+document.getElementById('videoForm').addEventListener('submit', async function(e) {
   e.preventDefault();
   if (!adminMode) { alert('⚠️ No autorizado'); return; }
   
-  const newVideo = {
-    id: editingVideoId || "video_" + Date.now(),
+  showSync('Guardando video...', 'loading', 0);
+  
+  const videoData = {
     title: document.getElementById('videoTitle').value.trim(),
     description: document.getElementById('videoDesc').value.trim(),
-    url: document.getElementById('videoUrl').value.trim()
+    url: document.getElementById('videoUrl').value.trim(),
+    updatedAt: Date.now()
   };
 
-  if (editingVideoId) {
-    featuredVideos = featuredVideos.map(v => v.id === editingVideoId ? newVideo : v);
-  } else {
-    featuredVideos.push(newVideo);
+  try {
+    if (editingVideoId) {
+      await videosRef.doc(editingVideoId).update(videoData);
+      showSync('Video actualizado ✅', 'success', 2000);
+    } else {
+      videoData.createdAt = Date.now();
+      await videosRef.add(videoData);
+      showSync('Video agregado ✅', 'success', 2000);
+    }
+    closeVideoDialog();
+  } catch (error) {
+    console.error('Error al guardar video:', error);
+    showSync('Error al guardar', 'error', 3000);
+    alert('❌ Error al guardar el video. Verifica tu conexión.');
   }
-
-  localStorage.setItem('featuredVideos_v1', JSON.stringify(featuredVideos));
-  renderFeaturedVideos();
-  closeVideoDialog();
 });
 
 function closeVideoDialog() {
@@ -1793,12 +1937,17 @@ function editVideo(id) {
   document.getElementById('videoDialog').showModal();
 }
 
-function deleteVideo(id) {
+async function deleteVideo(id) {
   if (!adminMode) { alert('⚠️ No autorizado'); return; }
   if (confirm("¿Eliminar este video permanentemente?")) {
-    featuredVideos = featuredVideos.filter(v => v.id !== id);
-    localStorage.setItem('featuredVideos_v1', JSON.stringify(featuredVideos));
-    renderFeaturedVideos();
+    showSync('Eliminando...', 'loading', 0);
+    try {
+      await videosRef.doc(id).delete();
+      showSync('Video eliminado ✅', 'success', 2000);
+    } catch (error) {
+      console.error('Error al eliminar:', error);
+      showSync('Error al eliminar', 'error', 3000);
+    }
   }
 }
 
@@ -1812,143 +1961,39 @@ document.getElementById('cartBtn').addEventListener('click', () => {
 });
 
 // ================================================================
-// 🆕 NUEVO: FUNCIONES EXPORTAR / IMPORTAR (v1.11.2)
+// INICIALIZACIÓN
 // ================================================================
-
-// EXPORTAR: Descarga productos + videos como archivo .json
-function exportData() {
-  if (!adminMode) { alert('⚠️ Debes iniciar sesión como admin'); return; }
-  
-  if (products.length === 0 && featuredVideos.length === 0) {
-    alert('⚠️ No hay productos ni videos para exportar');
-    return;
-  }
-  
-  const data = {
-    version: '1.0',
-    exportedAt: new Date().toISOString(),
-    products: products,
-    videos: featuredVideos
-  };
-  
-  const json = JSON.stringify(data, null, 2);
-  const blob = new Blob([json], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  
-  const a = document.createElement('a');
-  const fecha = new Date().toISOString().split('T')[0];
-  a.href = url;
-  a.download = `galeria-${fecha}.json`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  
-  alert(`✅ ¡Exportado con éxito!\n\n📦 ${products.length} productos\n🎬 ${featuredVideos.length} videos\n\nGuardá este archivo y pasalo junto con el link de la página.`);
-}
-
-// IMPORTAR: Abre el selector de archivos
-function triggerImport() {
-  if (!adminMode) { alert('⚠️ Debes iniciar sesión como admin'); return; }
-  document.getElementById('importFile').click();
-}
-
-// IMPORTAR: Procesa el archivo .json y hace MERGE
-function importData(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const data = JSON.parse(e.target.result);
-      
-      // Validar estructura del archivo
-      if (!data.products || !Array.isArray(data.products)) {
-        throw new Error('Formato inválido');
-      }
-      
-      const importedProducts = data.products || [];
-      const importedVideos = data.videos || [];
-      
-      // Confirmación con el usuario
-      const msg = `📦 Archivo encontrado:\n\n` +
-                  `• ${importedProducts.length} productos\n` +
-                  `• ${importedVideos.length} videos\n\n` +
-                  `Tu tienda actual tiene:\n` +
-                  `• ${products.length} productos\n` +
-                  `• ${featuredVideos.length} videos\n\n` +
-                  `¿Qué querés hacer?\n\n` +
-                  `✅ ACEPTAR = Agregar los nuevos (conserva los actuales)\n` +
-                  `❌ CANCELAR = No hace nada`;
-      
-      if (!confirm(msg)) {
-        event.target.value = '';
-        return;
-      }
-      
-      // Preguntar si quiere REEMPLAZAR o AGREGAR
-      const replace = confirm(
-        `⚠️ IMPORTANTE:\n\n` +
-        `Aceptar = AGREGA los productos nuevos a los que ya tenés\n` +
-        `Cancelar = REEMPLAZA todos los productos por los del archivo\n\n` +
-        `¿Querés REEMPLAZAR todo?`
-      );
-      
-      if (replace) {
-        // REEMPLAZAR
-        products = importedProducts;
-        featuredVideos = importedVideos;
-      } else {
-        // MERGE: agregar solo los que no existen (por ID)
-        const existingIds = new Set(products.map(p => p.id));
-        const newProducts = importedProducts.filter(p => !existingIds.has(p.id));
-        products = [...products, ...newProducts];
-        
-        const existingVideoIds = new Set(featuredVideos.map(v => v.id));
-        const newVideos = importedVideos.filter(v => !existingVideoIds.has(v.id));
-        featuredVideos = [...featuredVideos, ...newVideos];
-      }
-      
-      // Guardar en localStorage
-      localStorage.setItem('products_v26', JSON.stringify(products));
-      localStorage.setItem('featuredVideos_v1', JSON.stringify(featuredVideos));
-      
-      // Actualizar UI
-      renderProducts();
-      renderFeaturedVideos();
-      updateCartCount();
-      
-      alert(`✅ ¡Importación exitosa!\n\n` +
-            `Ahora tenés:\n` +
-            `📦 ${products.length} productos\n` +
-            `🎬 ${featuredVideos.length} videos`);
-      
-    } catch (err) {
-      alert('❌ Error al leer el archivo.\n\nAsegurate de que sea un archivo .json válido exportado desde esta página.\n\nDetalle: ' + err.message);
-    }
-    
-    // Resetear input para poder importar el mismo archivo de nuevo si es necesario
-    event.target.value = '';
-  };
-  reader.readAsText(file);
-}
-
-// Conectar botones
-document.getElementById('exportBtn').addEventListener('click', exportData);
-document.getElementById('importBtn').addEventListener('click', triggerImport);
-document.getElementById('importFile').addEventListener('change', importData);
-
-// ================================================================
-// FIN - FUNCIONES EXPORTAR / IMPORTAR
-// ================================================================
-
 updateAdminUI();
 loadCartIdentifier();
-updateCategorySuggestions();
-renderProducts();
-renderFeaturedVideos();
 updateCartCount();
+
+// Migración: si hay productos viejos en localStorage, ofrecer subirlos a Firebase
+const oldProducts = JSON.parse(localStorage.getItem('products_v26')) || [];
+const oldVideos = JSON.parse(localStorage.getItem('featuredVideos_v1')) || [];
+
+if ((oldProducts.length > 0 || oldVideos.length > 0) && adminMode) {
+  setTimeout(async () => {
+    if (confirm(`📦 Detectamos ${oldProducts.length} productos y ${oldVideos.length} videos guardados localmente.\n\n¿Querés subirlos a la nube para que todas las clientas los vean?`)) {
+      showSync('Migrando datos...', 'loading', 0);
+      try {
+        for (const p of oldProducts) {
+          const { id, ...data } = p;
+          await productsRef.doc(id).set(data);
+        }
+        for (const v of oldVideos) {
+          const { id, ...data } = v;
+          await videosRef.doc(id).set(data);
+        }
+        localStorage.removeItem('products_v26');
+        localStorage.removeItem('featuredVideos_v1');
+        showSync('¡Migración completa! ✅', 'success', 3000);
+      } catch (error) {
+        console.error('Error en migración:', error);
+        showSync('Error en migración', 'error', 3000);
+      }
+    }
+  }, 2000);
+}
 </script>
 
 </body>
