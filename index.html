@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<!-- v4.6.0-instagram-fix-plus-memory -->
+<!-- v4.7.0-video-final-plus-link -->
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Galería de Productos Editable</title>
@@ -26,6 +26,15 @@
   .btn-danger { background: #c02639; color: white; }
   .btn-warning { background: #f59e0b; color: white; }
   .btn-link { background: transparent; color: var(--accent); text-decoration: underline; padding: 4px 8px; font-size: 0.85rem; }
+
+  /* ESTILOS UNIFICADOS DE FORMULARIO */
+  .form-input, .form-select, .form-textarea {
+    width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px;
+    font-size: 1rem; font-family: inherit; background: white; transition: border-color 0.2s;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(159, 18, 57, 0.1);
+  }
 
   .banners-container { width: 100vw; position: relative; left: 50%; right: 50%; margin-left: -50vw; margin-right: -50vw; margin-top: 20px; margin-bottom: 20px; }
   .banner-item { width: 100%; position: relative; overflow: hidden; margin-bottom: 10px; cursor: pointer; background: #1a0a0e; }
@@ -95,6 +104,22 @@
   .product-code { font-size: 0.8rem; color: var(--muted); margin-bottom: 6px; font-weight: 600; letter-spacing: 0.5px; }
   .video-desc, .product-desc { color: var(--muted); font-size: 0.95rem; margin-bottom: 12px; }
   
+  /* ETIQUETA DE PRODUCTO RELACIONADO EN VIDEO */
+  .video-product-tag {
+    display: inline-block;
+    background: var(--accent);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-top: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+    text-decoration: none;
+  }
+  .video-product-tag:hover { background: var(--accent2); }
+
   .video-admin { display: none; gap: 8px; margin-top: 10px; }
   .admin-on .video-admin { display: flex; }
   .video-admin .btn { flex: 1; font-size: 0.9rem; padding: 8px; }
@@ -264,81 +289,16 @@
   .login-buttons { display: flex; gap: 10px; margin-top: 10px; }
   .login-buttons .btn { flex: 1; }
 
-  /* ESTILO UNIFICADO PARA TODOS LOS INPUTS DEL FORMULARIO */
-  .form-input, .form-select, .form-textarea {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-family: inherit;
-    background: white;
-    transition: border-color 0.2s, box-shadow 0.2s;
-  }
-  .form-input:focus, .form-select:focus, .form-textarea:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(159, 18, 57, 0.1);
-  }
-  
-  /* Sección admin con diseño unificado */
-  .admin-fields-section {
-    margin-bottom: 12px;
-    padding: 15px;
-    background: #fff0f5;
-    border-radius: 8px;
-    border: 1px dashed var(--accent);
-  }
-  .admin-fields-section h4 {
-    margin-bottom: 12px;
-    color: var(--accent);
-    font-size: 0.9rem;
-  }
-
   /* BOTÓN VOLVER ARRIBA */
   .scroll-top-btn {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    width: 50px;
-    height: 50px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    color: white;
-    border: none;
-    border-radius: 50%;
-    font-size: 1.5rem;
-    cursor: pointer;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.3s ease;
-    z-index: 1000;
-    box-shadow: 0 4px 15px rgba(159, 18, 57, 0.4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2)); color: white;
+    border: none; border-radius: 50%; font-size: 1.5rem; cursor: pointer;
+    opacity: 0; visibility: hidden; transition: all 0.3s ease; z-index: 1000;
+    box-shadow: 0 4px 15px rgba(159, 18, 57, 0.4); display: flex; align-items: center; justify-content: center;
   }
-  .scroll-top-btn.show {
-    opacity: 1;
-    visibility: visible;
-  }
-  .scroll-top-btn:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 6px 20px rgba(159, 18, 57, 0.6);
-  }
-
-  /* INDICADOR DE CAMPO MEMORIZADO */
-  .memory-indicator {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 0.75rem;
-    color: #166534;
-    background: rgba(22, 101, 52, 0.1);
-    padding: 2px 6px;
-    border-radius: 4px;
-    pointer-events: none;
-  }
+  .scroll-top-btn.show { opacity: 1; visibility: visible; }
+  .scroll-top-btn:hover { transform: translateY(-5px); box-shadow: 0 6px 20px rgba(159, 18, 57, 0.6); }
 
   @media (max-width: 1024px) { .videos-grid, .products { grid-template-columns: repeat(3, 1fr); } }
   @media (max-width: 768px) {
@@ -387,13 +347,7 @@
     .banner-overlay { padding: 15px; }
     .banner-admin { top: 10px; right: 10px; gap: 5px; }
     .banner-admin .btn { padding: 6px 12px; font-size: 0.75rem; }
-    .scroll-top-btn {
-      bottom: 20px;
-      right: 20px;
-      width: 45px;
-      height: 45px;
-      font-size: 1.2rem;
-    }
+    .scroll-top-btn { bottom: 20px; right: 20px; width: 45px; height: 45px; font-size: 1.2rem; }
   }
 </style>
 </head>
@@ -534,8 +488,8 @@
       </div>
 
       <!-- CAMPOS ADMIN CON DISEÑO UNIFICADO -->
-      <div class="admin-only admin-fields-section">
-        <h4>📋 Campos adicionales (Solo Admin)</h4>
+      <div class="admin-only admin-fields-section" style="margin-bottom:12px; padding:15px; background:#fff0f5; border-radius:8px; border:1px dashed var(--accent);">
+        <h4 style="margin-bottom:12px; color:var(--accent); font-size:0.9rem;">📋 Campos adicionales (Solo Admin)</h4>
         
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
           <div>
@@ -605,6 +559,15 @@
         <input id="videoUrl" type="url" placeholder="YouTube, TikTok, Instagram, Facebook..." class="form-input">
         <p style="font-size:0.75rem; color:var(--muted); margin:4px 0 0 0;">💡 Soporta: YouTube, Instagram, TikTok, Facebook, Vimeo, Drive</p>
       </div>
+      
+      <!-- NUEVO CAMPO: PRODUCTO RELACIONADO -->
+      <div style="margin-bottom:12px;">
+        <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">🔗 Producto relacionado (opcional)</label>
+        <input id="relatedProduct" type="text" list="productList" placeholder="Escribe para buscar un producto..." class="form-input">
+        <datalist id="productList"></datalist>
+        <p style="font-size:0.75rem; color:var(--muted); margin:4px 0 0 0;">💡 Si eliges uno, aparecerá un botón rojo en el video.</p>
+      </div>
+
       <div style="margin-top:20px; display:flex; gap:10px; flex-wrap: wrap;">
         <button type="submit" class="btn btn-primary" style="flex:1; min-width: 140px;">💾 Guardar</button>
         <button type="button" class="btn btn-secondary" onclick="closeVideoDialog()" style="flex:1; min-width: 140px;">❌ Cancelar</button>
@@ -778,7 +741,7 @@ function showSync(message, type = 'loading', duration = 2000) {
 }
 
 // ================================================================
-// 🧠 SISTEMA DE MEMORIA - GUARDAR Y RECUPERAR DATOS
+// 🧠 SISTEMA DE MEMORIA
 // ================================================================
 function saveFormMemory() {
   const memory = {
@@ -807,12 +770,9 @@ function loadFormMemory() {
     if (memory.costBS) document.getElementById('costBS').value = memory.costBS;
     if (memory.productLink) document.getElementById('productLink').value = memory.productLink;
     if (memory.additionalInfo) document.getElementById('additionalInfo').value = memory.additionalInfo;
-  } catch (e) {
-    console.error('Error al cargar memoria:', e);
-  }
+  } catch (e) { console.error('Error al cargar memoria:', e); }
 }
 
-// Guardar automáticamente cuando el usuario escribe
 ['category', 'fontStyle', 'productMeasure', 'productWeight', 'costUSD', 'costBS', 'productLink', 'additionalInfo'].forEach(id => {
   const el = document.getElementById(id);
   if (el) {
@@ -828,6 +788,7 @@ productsRef.onSnapshot((snapshot) => {
   products = [];
   snapshot.forEach(doc => products.push({ id: doc.id, ...doc.data() }));
   renderProducts();
+  updateProductDatalist(); // Actualizar lista de productos para videos
   updateCartCount();
   showSync('Listo', 'success', 1500);
 }, (error) => { 
@@ -932,29 +893,14 @@ function initDragAndDrop() {
     if (sortableInstances.has('banners')) sortableInstances.get('banners').destroy();
     
     const bannersSortable = new Sortable(bannersContainer, {
-      animation: 150,
-      handle: '.drag-handle-admin',
-      ghostClass: 'sortable-ghost',
-      dragClass: 'sortable-drag',
+      animation: 150, handle: '.drag-handle-admin', ghostClass: 'sortable-ghost', dragClass: 'sortable-drag',
       onEnd: async (evt) => {
-        const itemIds = Array.from(bannersContainer.children)
-          .map(child => child.getAttribute('data-id'))
-          .filter(id => id);
-        
+        const itemIds = Array.from(bannersContainer.children).map(child => child.getAttribute('data-id')).filter(id => id);
         showSync('Guardando orden...', 'loading', 0);
         const batch = db.batch();
-        itemIds.forEach((id, index) => {
-          const ref = bannersRef.doc(id);
-          batch.update(ref, { order: index });
-        });
-        
-        try {
-          await batch.commit();
-          showSync('¡Orden guardado! ✅', 'success', 2000);
-        } catch (error) {
-          console.error(error);
-          showSync('Error al guardar', 'error', 2000);
-        }
+        itemIds.forEach((id, index) => { batch.update(bannersRef.doc(id), { order: index }); });
+        try { await batch.commit(); showSync('¡Orden guardado! ✅', 'success', 2000); } 
+        catch (error) { console.error(error); showSync('Error al guardar', 'error', 2000); }
       }
     });
     sortableInstances.set('banners', bannersSortable);
@@ -963,35 +909,17 @@ function initDragAndDrop() {
   document.querySelectorAll('.products').forEach(grid => {
     if (grid.children.length > 0) {
       const catName = grid.getAttribute('data-category') || 'default';
-      
-      if (sortableInstances.has(catName)) {
-        sortableInstances.get(catName).destroy();
-      }
+      if (sortableInstances.has(catName)) sortableInstances.get(catName).destroy();
       
       const gridSortable = new Sortable(grid, {
-        animation: 150,
-        handle: '.drag-handle-admin',
-        ghostClass: 'sortable-ghost',
-        dragClass: 'sortable-drag',
+        animation: 150, handle: '.drag-handle-admin', ghostClass: 'sortable-ghost', dragClass: 'sortable-drag',
         onEnd: async (evt) => {
-          const itemIds = Array.from(grid.children)
-            .map(child => child.getAttribute('data-id'))
-            .filter(id => id);
-          
+          const itemIds = Array.from(grid.children).map(child => child.getAttribute('data-id')).filter(id => id);
           showSync('Guardando nuevo orden...', 'loading', 0);
           const batch = db.batch();
-          itemIds.forEach((id, index) => {
-            const ref = productsRef.doc(id);
-            batch.update(ref, { itemOrder: index });
-          });
-          
-          try {
-            await batch.commit();
-            showSync('¡Orden guardado! ✅', 'success', 2000);
-          } catch (error) {
-            console.error(error);
-            showSync('Error al guardar', 'error', 2000);
-          }
+          itemIds.forEach((id, index) => { batch.update(productsRef.doc(id), { itemOrder: index }); });
+          try { await batch.commit(); showSync('¡Orden guardado! ✅', 'success', 2000); } 
+          catch (error) { console.error(error); showSync('Error al guardar', 'error', 2000); }
         }
       });
       sortableInstances.set(catName, gridSortable);
@@ -1005,13 +933,8 @@ function initDragAndDrop() {
 function updateAdminUI() {
   document.body.classList.toggle('admin-on', adminMode);
   const loginBtn = document.getElementById('adminLoginBtn');
-  if (adminMode) {
-    loginBtn.textContent = '🔓 Cerrar Sesión';
-    loginBtn.onclick = logoutAdmin;
-  } else {
-    loginBtn.textContent = '🔐 Admin';
-    loginBtn.onclick = openLoginModal;
-  }
+  if (adminMode) { loginBtn.textContent = '🔓 Cerrar Sesión'; loginBtn.onclick = logoutAdmin; } 
+  else { loginBtn.textContent = '🔐 Admin'; loginBtn.onclick = openLoginModal; }
 }
 function openLoginModal() {
   document.getElementById('adminPassword').value = '';
@@ -1256,11 +1179,8 @@ function renderProducts() {
   products.forEach(p => {
     const cat = p.category || "Sin categoría";
     const order = p.categoryOrder !== undefined ? p.categoryOrder : 99;
-    if (!categoryMap[cat]) {
-      categoryMap[cat] = { order: order, ids: [] };
-    } else if (order < categoryMap[cat].order) {
-      categoryMap[cat].order = order;
-    }
+    if (!categoryMap[cat]) { categoryMap[cat] = { order: order, ids: [] }; } 
+    else if (order < categoryMap[cat].order) { categoryMap[cat].order = order; }
     categoryMap[cat].ids.push(p.id);
   });
 
@@ -1376,16 +1296,45 @@ function renderProducts() {
   setTimeout(initDragAndDrop, 100);
 }
 
+// ================================================================
+// 🎬 RENDERIZADO DE VIDEOS MEJORADO
+// ================================================================
 function renderFeaturedVideos() {
   const container = document.getElementById('featuredVideosContainer');
   if (!container) return;
   if (featuredVideos.length === 0) { container.innerHTML = ''; return; }
+  
   let html = `<div class="videos-section"><div class="category-wrapper-title"><h2>🎬 Videos Principales</h2><span class="cat-ornament">✦ ✦ ✦</span></div><div class="videos-grid">`;
+  
   featuredVideos.forEach(video => {
     const thumbnail = getVideoThumbnail(video.url);
     const thumbHtml = thumbnail ? `<img class="video-thumb" src="${thumbnail}" alt="${video.title}" loading="lazy" oncontextmenu="return false;" style="pointer-events: none; user-select: none; -webkit-user-drag: none;">` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:white;font-size:3rem;">🎬</div>`;
-    html += `<div class="video-card"><div class="video-media" onclick="openVideoLightbox('${video.id}', false)">${thumbHtml}</div><div class="video-body"><h3 class="video-title">${video.title}</h3>${video.description ? `<p class="video-desc">${video.description}</p>` : ''}<div class="video-admin"><button class="btn btn-secondary" onclick="editVideo('${video.id}')">Editar</button><button class="btn btn-danger" onclick="deleteVideo('${video.id}')">Eliminar</button></div></div></div>`;
+    
+    // Botón de producto relacionado
+    let relatedProductHtml = '';
+    if (video.relatedProductId) {
+      const relatedProduct = products.find(p => p.id === video.relatedProductId);
+      if (relatedProduct) {
+        relatedProductHtml = `<a href="#" onclick="openMediaModal('${relatedProduct.id}'); return false;" class="video-product-tag">🛍️ Ver producto: ${relatedProduct.title}</a>`;
+      }
+    }
+
+    html += `<div class="video-card">
+      <div class="video-media" onclick="openVideoLightbox('${video.id}', false)">
+        ${thumbHtml}
+      </div>
+      <div class="video-body">
+        <h3 class="video-title">${video.title}</h3>
+        ${video.description ? `<p class="video-desc">${video.description}</p>` : ''}
+        ${relatedProductHtml}
+        <div class="video-admin">
+          <button class="btn btn-secondary" onclick="editVideo('${video.id}')">Editar</button>
+          <button class="btn btn-danger" onclick="deleteVideo('${video.id}')">Eliminar</button>
+        </div>
+      </div>
+    </div>`;
   });
+  
   html += `</div></div>`;
   container.innerHTML = html;
 }
@@ -1426,7 +1375,6 @@ function renderBanners() {
 // ================================================================
 function cleanUrl(url) {
   if (!url) return '';
-  // Quitar todo lo que viene después de ? (parámetros)
   return url.split('?')[0].split('#')[0].trim();
 }
 
@@ -1459,15 +1407,12 @@ function getYoutubeId(url) {
   return null; 
 }
 
-// 🎯 FUNCIÓN MEJORADA PARA INSTAGRAM - Limpia el URL y extrae el código
 function getInstagramInfo(url) { 
-  const clean = cleanUrl(url); // Limpia parámetros como ?utm_source=...
-  // Busca el código después de /p/, /reel/ o /tv/
+  const clean = cleanUrl(url);
   const m = clean.match(/instagram\.com\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/); 
   return m ? m[1] : null; 
 }
 
-// 🎯 URL LIMPIA DE INSTAGRAM para el embed
 function getInstagramCleanUrl(url) {
   const code = getInstagramInfo(url);
   if (!code) return null;
@@ -1627,6 +1572,13 @@ function updateCategorySuggestions() {
   datalist.innerHTML = uniqueCategories.map(cat => `<option value="${cat.replace(/"/g, '&quot;')}">`).join('');
 }
 
+// 🆕 ACTUALIZAR LISTA DE PRODUCTOS PARA EL FORMULARIO DE VIDEO
+function updateProductDatalist() {
+  const datalist = document.getElementById('productList');
+  if (!datalist) return;
+  datalist.innerHTML = products.map(p => `<option value="${p.title}" data-id="${p.id}">`).join('');
+}
+
 // ================================================================
 // LIGHTBOX AUTOAJUSTABLE
 // ================================================================
@@ -1674,56 +1626,28 @@ function renderLightboxMedia() {
   if (media.type === 'video') {
     const platform = getVideoPlatform(media.url);
     
-    // 🎯 TRATAMIENTO ESPECIAL PARA INSTAGRAM
     if (platform === 'instagram') {
       const cleanInstagramUrl = getInstagramCleanUrl(media.url);
       if (cleanInstagramUrl) {
-        // Usar el embed oficial de Instagram con iframe
-        container.innerHTML = `
-          <iframe 
-            src="${cleanInstagramUrl}embed" 
-            style="width:100%; max-width:500px; height:80vh; border:none; background:white;"
-            allowtransparency="true">
-          </iframe>
-        `;
+        container.innerHTML = `<iframe src="${cleanInstagramUrl}embed" style="width:100%; max-width:500px; height:80vh; border:none; background:white;" allowtransparency="true"></iframe>`;
       } else {
         container.innerHTML = `<div class="media-fallback"><div class="media-fallback-icon">📷</div><div class="media-fallback-title">No se pudo cargar Instagram</div><a href="${media.url}" target="_blank" class="media-fallback-btn">🔗 Abrir en Instagram</a></div>`;
       }
-    } 
-    // 🎯 TRATAMIENTO ESPECIAL PARA TIKTOK
-    else if (platform === 'tiktok') {
+    } else if (platform === 'tiktok') {
       const ttId = getTikTokInfo(media.url);
       if (ttId) {
-        container.innerHTML = `
-          <iframe 
-            src="https://www.tiktok.com/embed/v2/${ttId}" 
-            style="width:100%; max-width:400px; height:80vh; border:none;"
-            allow="encrypted-media">
-          </iframe>
-        `;
+        container.innerHTML = `<iframe src="https://www.tiktok.com/embed/v2/${ttId}" style="width:100%; max-width:400px; height:80vh; border:none;" allow="encrypted-media"></iframe>`;
       } else {
         container.innerHTML = `<div class="media-fallback"><div class="media-fallback-icon">🎵</div><div class="media-fallback-title">No se pudo cargar TikTok</div><a href="${media.url}" target="_blank" class="media-fallback-btn">🔗 Abrir en TikTok</a></div>`;
       }
-    }
-    // 🎯 TRATAMIENTO ESPECIAL PARA FACEBOOK
-    else if (platform === 'facebook') {
+    } else if (platform === 'facebook') {
       const fbEmbedUrl = getVideoEmbedUrl(media.url);
       if (fbEmbedUrl) {
-        container.innerHTML = `
-          <iframe 
-            src="${fbEmbedUrl}" 
-            style="width:100%; max-width:560px; height:80vh; border:none; overflow:hidden;"
-            scrolling="no" 
-            allow="encrypted-media"
-            allowtransparency="true">
-          </iframe>
-        `;
+        container.innerHTML = `<iframe src="${fbEmbedUrl}" style="width:100%; max-width:560px; height:80vh; border:none; overflow:hidden;" scrolling="no" allow="encrypted-media" allowtransparency="true"></iframe>`;
       } else {
         container.innerHTML = `<div class="media-fallback"><div class="media-fallback-icon">📘</div><div class="media-fallback-title">No se pudo cargar Facebook</div><a href="${media.url}" target="_blank" class="media-fallback-btn">🔗 Abrir en Facebook</a></div>`;
       }
-    }
-    // Otros videos (YouTube, Vimeo, Drive, directos)
-    else {
+    } else {
       const embedUrl = getVideoEmbedUrl(media.url);
       if (embedUrl) {
         if (media.url.match(/\.(mp4|webm|ogg|mov)(\?|$)/i)) {
@@ -1782,10 +1706,7 @@ document.getElementById('openAddBtn').addEventListener('click', () => {
   editingId = null;
   document.getElementById('dialogTitle').textContent = "📦 Agregar Producto";
   document.getElementById('productForm').reset();
-  
-  // 🧠 CARGAR MEMORIA al abrir el formulario
   loadFormMemory();
-  
   updateCategorySuggestions();
   document.getElementById('productDialog').showModal();
 });
@@ -1815,10 +1736,7 @@ document.getElementById('productForm').addEventListener('submit', async function
     additionalInfo: document.getElementById('additionalInfo').value.trim(),
     updatedAt: Date.now()
   };
-  
-  // 🧠 GUARDAR MEMORIA al guardar el producto
   saveFormMemory();
-  
   try {
     if (editingId) { 
       await productsRef.doc(editingId).update(productData); 
@@ -1878,11 +1796,15 @@ async function deleteProduct(id) {
   }
 }
 
+// ================================================================
+// ADMIN VIDEOS
+// ================================================================
 document.getElementById('addVideoBtn').addEventListener('click', () => {
   if (!adminMode) { alert('⚠️ Iniciá sesión'); return; }
   editingVideoId = null;
   document.getElementById('videoDialogTitle').textContent = "🎬 Agregar Video";
   document.getElementById('videoForm').reset();
+  updateProductDatalist(); // Cargar lista de productos
   document.getElementById('videoDialog').showModal();
 });
 
@@ -1890,10 +1812,17 @@ document.getElementById('videoForm').addEventListener('submit', async function(e
   e.preventDefault();
   if (!adminMode) return;
   showSync('Guardando...', 'loading', 0);
+  
+  // Buscar ID del producto relacionado
+  const relatedProductName = document.getElementById('relatedProduct').value;
+  const relatedProduct = products.find(p => p.title === relatedProductName);
+  const relatedId = relatedProduct ? relatedProduct.id : '';
+
   const videoData = { 
     title: document.getElementById('videoTitle').value.trim(), 
     description: document.getElementById('videoDesc').value.trim(), 
     url: document.getElementById('videoUrl').value.trim(), 
+    relatedProductId: relatedId,
     updatedAt: Date.now() 
   };
   try {
@@ -1925,6 +1854,16 @@ function editVideo(id) {
   document.getElementById('videoTitle').value = video.title || '';
   document.getElementById('videoDesc').value = video.description || '';
   document.getElementById('videoUrl').value = video.url || '';
+  
+  // Cargar producto relacionado si existe
+  if (video.relatedProductId) {
+    const related = products.find(p => p.id === video.relatedProductId);
+    if (related) document.getElementById('relatedProduct').value = related.title;
+  } else {
+    document.getElementById('relatedProduct').value = '';
+  }
+  
+  updateProductDatalist();
   document.getElementById('videoDialog').showModal();
 }
 
