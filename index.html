@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<!-- v4.4.0-video-support-plus-protection -->
+<!-- v4.5.0-fix-instagram-videos-plus-scroll-top -->
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Galería de Productos Editable</title>
@@ -265,6 +265,37 @@
   .login-buttons { display: flex; gap: 10px; margin-top: 10px; }
   .login-buttons .btn { flex: 1; }
 
+  /* BOTÓN VOLVER ARRIBA */
+  .scroll-top-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 1.5rem;
+    cursor: pointer;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    box-shadow: 0 4px 15px rgba(159, 18, 57, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .scroll-top-btn.show {
+    opacity: 1;
+    visibility: visible;
+  }
+  .scroll-top-btn:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 20px rgba(159, 18, 57, 0.6);
+  }
+
   @media (max-width: 1024px) { .videos-grid, .products { grid-template-columns: repeat(3, 1fr); } }
   @media (max-width: 768px) {
     .videos-grid, .products { grid-template-columns: repeat(2, 1fr); gap: 16px; }
@@ -312,6 +343,13 @@
     .banner-overlay { padding: 15px; }
     .banner-admin { top: 10px; right: 10px; gap: 5px; }
     .banner-admin .btn { padding: 6px 12px; font-size: 0.75rem; }
+    .scroll-top-btn {
+      bottom: 20px;
+      right: 20px;
+      width: 45px;
+      height: 45px;
+      font-size: 1.2rem;
+    }
   }
 </style>
 </head>
@@ -350,6 +388,9 @@
   <span id="syncIcon">⏳</span>
   <span id="syncText">Cargando...</span>
 </div>
+
+<!-- BOTÓN VOLVER ARRIBA -->
+<button class="scroll-top-btn" id="scrollTopBtn" onclick="scrollToTop()" title="Volver arriba">↑</button>
 
 <div class="cart-overlay" id="cartOverlay"></div>
 <div class="cart" id="cartPanel">
@@ -1156,7 +1197,7 @@ function renderProducts() {
     let html = `<div class="category-section">
       <div class="category-wrapper-title">
         <h2>${cat}</h2>
-        <span class="cat-ornament">✦ ✦ ✦</span>
+        <span class="cat-ornament">✦ ✦ </span>
       </div>
       <div class="products" data-category="${cat}">`;
     
@@ -1531,7 +1572,28 @@ function renderLightboxMedia() {
       if (media.url.match(/\.(mp4|webm|ogg|mov)(\?|$)/i)) {
         container.innerHTML = `<video src="${media.url}" controls autoplay style="max-width:100%; max-height:82vh;"></video>`;
       } else {
-        container.innerHTML = `<iframe src="${embedUrl}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="width:100%; height:100%; border:none;"></iframe>`;
+        // Para Instagram y otros embeds, usar contenedor responsivo
+        const platform = getVideoPlatform(media.url);
+        if (platform === 'instagram') {
+          // Instagram necesita un contenedor especial
+          container.innerHTML = `
+            <div style="width:100%; max-width:540px; margin:0 auto;">
+              <blockquote class="instagram-media" data-instgrm-permalink="${media.url}" data-instgrm-version="14" style="background:#FFF; border:0; border-radius:3px; box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 1px; max-width:540px; min-width:326px; padding:0; width:99.375%; width:-webkit-calc(100% - 2px); width:calc(100% - 2px);"></blockquote>
+            </div>
+          `;
+          // Cargar script de Instagram
+          if (!document.getElementById('instagram-embed-script')) {
+            const script = document.createElement('script');
+            script.id = 'instagram-embed-script';
+            script.src = '//www.instagram.com/embed.js';
+            script.async = true;
+            document.body.appendChild(script);
+          } else {
+            window.instgrm.Embeds.process();
+          }
+        } else {
+          container.innerHTML = `<iframe src="${embedUrl}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="width:100%; height:100%; border:none;"></iframe>`;
+        }
       }
     } else {
       container.innerHTML = `<div class="media-fallback"><div class="media-fallback-icon">🎬</div><div class="media-fallback-title">Video no compatible</div><a href="${media.url}" target="_blank" class="media-fallback-btn">🔗 Abrir</a></div>`;
@@ -1557,6 +1619,26 @@ function renderLightboxMedia() {
 
 document.getElementById('mediaModal').addEventListener('close', () => { 
   document.getElementById('mediaContainer').innerHTML = ''; 
+});
+
+// ================================================================
+// BOTÓN VOLVER ARRIBA
+// ================================================================
+function scrollToTop() {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
+}
+
+// Mostrar/ocultar botón según scroll
+window.addEventListener('scroll', () => {
+  const scrollTopBtn = document.getElementById('scrollTopBtn');
+  if (window.pageYOffset > 300) {
+    scrollTopBtn.classList.add('show');
+  } else {
+    scrollTopBtn.classList.remove('show');
+  }
 });
 
 // ================================================================
