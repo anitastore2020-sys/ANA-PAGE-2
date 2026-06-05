@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<!-- v3.5.0-stable-4-fixes -->
+<!-- v4.3.0-fix-drag-drop-stable -->
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Galería de Productos Editable</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
 <style>
   :root { --accent: #9f1239; --accent2: #be185d; --ink: #22161a; --muted: #7b5a63; }
@@ -24,6 +25,7 @@
   .btn-accent { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: white; }
   .btn-danger { background: #c02639; color: white; }
   .btn-warning { background: #f59e0b; color: white; }
+  .btn-link { background: transparent; color: var(--accent); text-decoration: underline; padding: 4px 8px; font-size: 0.85rem; }
 
   .banners-container { width: 100vw; position: relative; left: 50%; right: 50%; margin-left: -50vw; margin-right: -50vw; margin-top: 20px; margin-bottom: 20px; }
   .banner-item { width: 100%; position: relative; overflow: hidden; margin-bottom: 10px; cursor: pointer; background: #1a0a0e; }
@@ -50,37 +52,27 @@
   .banner-admin .btn { padding: 8px 16px; font-size: 0.85rem; background: rgba(255,255,255,0.95); color: var(--ink); backdrop-filter: blur(8px); }
   .banner-admin .btn-danger { background: rgba(192, 38, 57, 0.95); color: white; }
 
-  .videos-section, .category-section, .offers-section { margin-bottom: 70px; }
-  .videos-section h2, .category-section h2, .offers-section h2 {
+  .videos-section, .category-section { margin-bottom: 70px; }
+  .videos-section h2, .category-section h2 {
     font-family: 'Cormorant Garamond', serif; font-size: clamp(2.2rem, 5vw, 3.5rem); font-weight: 700; text-align: center;
     margin: 50px 0 40px; padding: 0 20px; letter-spacing: 1px; line-height: 1.1; text-transform: uppercase;
     display: flex; align-items: center; justify-content: center; gap: 18px; flex-wrap: wrap;
   }
   .videos-section h2 { color: var(--accent); }
   .category-section h2 { color: var(--accent2); }
-  .offers-section h2 { color: #c02639; margin: 20px 0 40px; }
   
-  .videos-section h2::before, .videos-section h2::after, .category-section h2::before, .category-section h2::after, .offers-section h2::before, .offers-section h2::after {
+  .videos-section h2::before, .videos-section h2::after, .category-section h2::before, .category-section h2::after {
     content: ''; flex: 1; max-width: 120px; height: 2px; min-width: 30px;
   }
   .videos-section h2::before, .videos-section h2::after { background: linear-gradient(90deg, transparent, var(--accent), transparent); }
   .category-section h2::before, .category-section h2::after { background: linear-gradient(90deg, transparent, var(--accent2), transparent); }
-  .offers-section h2::before, .offers-section h2::after { background: linear-gradient(90deg, transparent, #c02639, transparent); }
   
-  .videos-section h2 > .cat-ornament, .category-section h2 > .cat-ornament, .offers-section h2 > .cat-ornament {
+  .videos-section h2 > .cat-ornament, .category-section h2 > .cat-ornament {
     display: block; width: 100%; text-align: center; font-size: 1.2rem; color: var(--accent); margin-top: 4px; letter-spacing: 8px; opacity: 0.8;
   }
 
-  .offers-section { padding: 40px 0; background: linear-gradient(135deg, rgba(192, 38, 57, 0.08), rgba(159, 18, 57, 0.05)); border-radius: 20px; position: relative; }
-  .offers-section::before {
-    content: '🔥'; position: absolute; top: -25px; left: 50%; transform: translateX(-50%); font-size: 3rem;
-    background: linear-gradient(135deg, #c02639, #9f1239); width: 60px; height: 60px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(192, 38, 57, 0.4); animation: pulse-fire 2s infinite;
-  }
-  @keyframes pulse-fire { 0%, 100% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.1); } }
-
-  .videos-grid, .offers-grid, .products { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; }
-  .video-card, .product { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+  .videos-grid, .products { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; }
+  .video-card, .product { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); position: relative; }
   
   .video-media, .product-media {
     width: 100%; height: 300px; background: #1a0a0e; position: relative; cursor: zoom-in;
@@ -123,8 +115,21 @@
   @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
   .price-savings { width: 100%; font-size: 0.8rem; color: #166534; font-weight: 600; margin-top: 4px; }
 
-  .admin-only { display: none; }
+  .admin-only { display: none !important; }
   .admin-on .admin-only { display: inline-block !important; }
+  .admin-on .drag-handle-admin { display: flex !important; }
+
+  /* ESTILOS DRAG & DROP */
+  .drag-handle-admin {
+    position: absolute; top: 10px; left: 10px; z-index: 20;
+    width: 32px; height: 32px; background: rgba(255,255,255,0.95);
+    border-radius: 50%; display: none; align-items: center; justify-content: center;
+    cursor: grab; font-size: 1.2rem; color: var(--accent);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2); transition: transform 0.2s;
+  }
+  .drag-handle-admin:active { cursor: grabbing; transform: scale(0.9); }
+  .sortable-ghost { opacity: 0.4; background: #f8d7e6 !important; border: 2px dashed var(--accent); }
+  .sortable-drag { cursor: grabbing; opacity: 0.9; }
 
   .sync-indicator {
     position: fixed; bottom: 20px; left: 20px; background: white; padding: 10px 16px; border-radius: 50px;
@@ -260,10 +265,10 @@
   .login-buttons { display: flex; gap: 10px; margin-top: 10px; }
   .login-buttons .btn { flex: 1; }
 
-  @media (max-width: 1024px) { .videos-grid, .offers-grid, .products { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 1024px) { .videos-grid, .products { grid-template-columns: repeat(3, 1fr); } }
   @media (max-width: 768px) {
-    .videos-grid, .offers-grid, .products { grid-template-columns: repeat(2, 1fr); gap: 16px; }
-    .videos-section h2::before, .videos-section h2::after, .category-section h2::before, .category-section h2::after, .offers-section h2::before, .offers-section h2::after { max-width: 60px; }
+    .videos-grid, .products { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .videos-section h2::before, .videos-section h2::after, .category-section h2::before, .category-section h2::after { max-width: 60px; }
     .video-media, .product-media { height: 260px; }
     .topbar { justify-content: center; }
     .brand { margin-bottom: 8px; }
@@ -274,11 +279,11 @@
   }
   @media (max-width: 480px) {
     .wrap { padding: 0 12px; }
-    .videos-grid, .offers-grid, .products { grid-template-columns: 1fr; gap: 20px; }
-    .videos-section, .category-section, .offers-section { margin-bottom: 50px; }
-    .videos-section h2, .category-section h2, .offers-section h2 { font-size: clamp(1.6rem, 7vw, 2.2rem); margin: 40px 0 28px; gap: 10px; letter-spacing: 0.5px; }
-    .videos-section h2::before, .videos-section h2::after, .category-section h2::before, .category-section h2::after, .offers-section h2::before, .offers-section h2::after { max-width: 30px; }
-    .videos-section h2 > .cat-ornament, .category-section h2 > .cat-ornament, .offers-section h2 > .cat-ornament { font-size: 1rem; letter-spacing: 6px; }
+    .videos-grid, .products { grid-template-columns: 1fr; gap: 20px; }
+    .videos-section, .category-section { margin-bottom: 50px; }
+    .videos-section h2, .category-section h2 { font-size: clamp(1.6rem, 7vw, 2.2rem); margin: 40px 0 28px; gap: 10px; letter-spacing: 0.5px; }
+    .videos-section h2::before, .videos-section h2::after, .category-section h2::before, .category-section h2::after { max-width: 30px; }
+    .videos-section h2 > .cat-ornament, .category-section h2 > .cat-ornament { font-size: 1rem; letter-spacing: 6px; }
     .video-media, .product-media { height: 300px; }
     .topbar { flex-direction: column; align-items: stretch; padding: 12px 0; }
     .brand { justify-content: center; font-size: 1.4rem; }
@@ -337,7 +342,6 @@
 <div class="banners-container" id="bannersContainer"></div>
 
 <div class="wrap">
-  <div id="offersContainer"></div>
   <div id="featuredVideosContainer"></div>
   <div id="productsContainer"></div>
 </div>
@@ -353,7 +357,6 @@
     <button class="cart-close-btn" onclick="closeCart()" aria-label="Cerrar">×</button>
     <h2>🛍️ Tu Pedido</h2>
     
-    <!-- ARREGLO 4: Campos obligatorios para CRM -->
     <div class="cart-identifier-group">
       <label class="cart-identifier-label" for="clientPhone">📱 Número de Celular *</label>
       <input type="tel" id="clientPhone" class="cart-identifier-input" placeholder="Ej: 77712345" maxlength="15" required>
@@ -390,8 +393,8 @@
   </div>
 </dialog>
 
-<dialog id="productDialog" style="width:92%; max-width:650px; border:none; border-radius:20px; padding:0;">
-  <div style="padding:25px;">
+<dialog id="productDialog" style="width:92%; max-width:700px; border:none; border-radius:20px; padding:0;">
+  <div style="padding:25px; max-height: 90vh; overflow-y: auto;">
     <h3 id="dialogTitle" style="text-align:center; margin-bottom:20px; color:var(--accent);">📦 Agregar Producto</h3>
     <form id="productForm">
       <div style="margin-bottom:12px;">
@@ -447,6 +450,43 @@
         </div>
       </div>
 
+      <!-- CAMPOS ADMIN -->
+      <div class="admin-only" style="margin-bottom:12px; padding:15px; background:#fff0f5; border-radius:8px; border:1px dashed var(--accent);">
+        <h4 style="margin-bottom:12px; color:var(--accent); font-size:0.9rem;">📋 Campos adicionales (Solo Admin)</h4>
+        
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
+          <div>
+            <label style="font-size:0.8rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">📏 Medida del producto</label>
+            <input id="productMeasure" type="text" placeholder="Ej: 500ml, 1kg, 30cm" style="width:100%; padding:10px; border: 1px solid #ddd; border-radius: 8px; font-size:0.9rem;">
+          </div>
+          <div>
+            <label style="font-size:0.8rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">⚖️ Peso (gramos)</label>
+            <input id="productWeight" type="number" placeholder="Ej: 500" style="width:100%; padding:10px; border: 1px solid #ddd; border-radius: 8px; font-size:0.9rem;">
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
+          <div>
+            <label style="font-size:0.8rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">💰 Costo USD</label>
+            <input id="costUSD" type="number" step="0.01" placeholder="0.00" style="width:100%; padding:10px; border: 1px solid #ddd; border-radius: 8px; font-size:0.9rem;">
+          </div>
+          <div>
+            <label style="font-size:0.8rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">💰 Costo Bs</label>
+            <input id="costBS" type="number" step="0.01" placeholder="0.00" style="width:100%; padding:10px; border: 1px solid #ddd; border-radius: 8px; font-size:0.9rem;">
+          </div>
+        </div>
+
+        <div style="margin-bottom:12px;">
+          <label style="font-size:0.8rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">🔗 Link de referencia</label>
+          <input id="productLink" type="url" placeholder="https://..." style="width:100%; padding:10px; border: 1px solid #ddd; border-radius: 8px; font-size:0.9rem;">
+        </div>
+
+        <div style="margin-bottom:12px;">
+          <label style="font-size:0.8rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">📝 Información adicional</label>
+          <textarea id="additionalInfo" placeholder="Notas internas, proveedor, etc..." rows="2" style="width:100%; padding:10px; border: 1px solid #ddd; border-radius: 8px; font-size:0.9rem;"></textarea>
+        </div>
+      </div>
+
       <div style="margin-bottom:12px;">
         <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">📄 Descripción</label>
         <textarea id="description" placeholder="Detalles del producto..." rows="3" style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;"></textarea>
@@ -455,7 +495,6 @@
       <div style="margin-bottom:12px;">
         <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">🖼️ Links de imágenes/GIFs</label>
         <textarea id="mediaLinks" placeholder="Pega los links aquí (uno por línea)" rows="4" style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;"></textarea>
-        <p style="font-size:0.7rem; color:var(--muted); margin:4px 0 0 0;">💡 Soporta: Google Drive, Giphy, Tenor, links directos (.jpg, .png, .gif)</p>
       </div>
 
       <div style="margin-top:20px; display:flex; gap:10px; flex-wrap: wrap;">
@@ -481,7 +520,6 @@
       <div style="margin-bottom:12px;">
         <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">URL del video *</label>
         <input id="videoUrl" type="url" placeholder="YouTube, TikTok, Drive, .mp4..." required style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;">
-        <p style="font-size:0.75rem; color:var(--muted); margin:4px 0 0 0;">💡 YouTube • Instagram • TikTok • Drive • Vimeo • .mp4</p>
       </div>
       <div style="margin-top:20px; display:flex; gap:10px; flex-wrap: wrap;">
         <button type="submit" class="btn btn-primary" style="flex:1; min-width: 140px;">💾 Guardar</button>
@@ -543,61 +581,44 @@
           <option value="video">🎬 Video</option>
         </select>
       </div>
-
       <div style="margin-bottom:12px;">
         <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">📍 Mostrar después de la categoría:</label>
         <select id="csAfterCategory" style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;">
-          <option value="">🔝 Al principio (antes de todas las categorías)</option>
+          <option value="">🔝 Al principio (antes de todas)</option>
         </select>
-        <p style="font-size:0.7rem; color:var(--muted); margin:4px 0 0 0;">Si eliges una categoría, el bloque aparecerá justo debajo de ella.</p>
       </div>
-
       <div style="margin-bottom:12px;">
-        <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">🔢 Orden (número)</label>
+        <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">🔢 Orden</label>
         <input id="csOrder" type="number" value="1" style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;">
-        <p style="font-size:0.7rem; color:var(--muted); margin:4px 0 0 0;">Menor número = aparece primero en ese lugar.</p>
       </div>
-
       <div id="csBannerFields">
         <div style="margin-bottom:12px;">
-          <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">Título del Banner (opcional)</label>
-          <input id="csTitle" type="text" placeholder="Ej: ¡Promo de Temporada!" style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;">
-        </div>
-        <div style="margin-bottom:12px;">
-          <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">Subtítulo (opcional)</label>
-          <input id="csSubtitle" type="text" placeholder="Ej: Envío gratis" style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;">
+          <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">Título del Banner</label>
+          <input id="csTitle" type="text" placeholder="Ej: ¡Promo!" style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;">
         </div>
         <div style="margin-bottom:12px;">
           <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">URL de la Imagen *</label>
           <input id="csImageUrl" type="url" placeholder="https://..." required style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;">
         </div>
         <div style="margin-bottom:12px;">
-          <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">Link al hacer clic (opcional)</label>
-          <input id="csLinkUrl" type="url" placeholder="https://..." style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;">
-        </div>
-        <div style="margin-bottom:12px;">
-          <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">Tamaño del Banner</label>
+          <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">Tamaño</label>
           <select id="csSize" style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;">
             <option value="banner-compact">Compacto (500px)</option>
             <option value="banner-standard" selected>Estándar (540px) ⭐</option>
-            <option value="banner-tall">Alto (600px)</option>
             <option value="banner-square-800">Cuadrado (800x800px)</option>
-            <option value="banner-square-1200">Cuadrado Grande (1200x1200px)</option>
           </select>
         </div>
       </div>
-
       <div id="csVideoFields" style="display:none;">
         <div style="margin-bottom:12px;">
           <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">Título del Video</label>
-          <input id="csVideoTitle" type="text" placeholder="Ej: Tutorial de uso" style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;">
+          <input id="csVideoTitle" type="text" placeholder="Ej: Tutorial" style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;">
         </div>
         <div style="margin-bottom:12px;">
           <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">URL del Video *</label>
-          <input id="csVideoUrl" type="url" placeholder="YouTube, TikTok, Drive, .mp4..." required style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;">
+          <input id="csVideoUrl" type="url" placeholder="YouTube, TikTok..." required style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;">
         </div>
       </div>
-
       <div style="margin-top:20px; display:flex; gap:10px; flex-wrap: wrap;">
         <button type="submit" class="btn btn-primary" style="flex:1; min-width: 140px;">💾 Guardar</button>
         <button type="button" class="btn btn-secondary" onclick="closeCustomSectionDialog()" style="flex:1; min-width: 140px;">❌ Cancelar</button>
@@ -658,6 +679,9 @@ let editingCsId = null;
 let currentMediaList = [];
 let currentMediaIndex = 0;
 
+// Mapa global para guardar instancias de Sortable y evitar duplicados
+const sortableInstances = new Map();
+
 function showSync(message, type = 'loading', duration = 2000) {
   const indicator = document.getElementById('syncIndicator');
   const icon = document.getElementById('syncIcon');
@@ -676,9 +700,7 @@ function showSync(message, type = 'loading', duration = 2000) {
 productsRef.onSnapshot((snapshot) => {
   products = [];
   snapshot.forEach(doc => products.push({ id: doc.id, ...doc.data() }));
-  products.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
   renderProducts();
-  renderOffers();
   updateCartCount();
   showSync('Listo', 'success', 1500);
 }, (error) => { 
@@ -689,7 +711,6 @@ productsRef.onSnapshot((snapshot) => {
 videosRef.onSnapshot((snapshot) => {
   featuredVideos = [];
   snapshot.forEach(doc => featuredVideos.push({ id: doc.id, ...doc.data() }));
-  featuredVideos.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
   renderFeaturedVideos();
 });
 
@@ -706,7 +727,7 @@ customSectionsRef.orderBy('order', 'asc').onSnapshot((snapshot) => {
 });
 
 // ================================================================
-// 💾 ARREGLO 1: SISTEMA DE BACKUP Y RESTAURACIÓN
+// 💾 SISTEMA DE BACKUP Y RESTAURACIÓN
 // ================================================================
 async function exportBackup() {
   showSync('Generando backup...', 'loading', 0);
@@ -740,7 +761,7 @@ async function exportBackup() {
 async function importBackup(event) {
   const file = event.target.files[0];
   if (!file) return;
-  if (!confirm("⚠️ ¿Estás segura? Esto fusionará los datos del archivo con tu web actual. ¿Continuar?")) {
+  if (!confirm("⚠️ ¿Fusionar datos del archivo con tu web actual?")) {
     event.target.value = ''; return;
   }
   showSync('Restaurando datos...', 'loading', 0);
@@ -758,7 +779,7 @@ async function importBackup(event) {
       if (data.videos) await writeCollection(videosRef, data.videos);
       if (data.banners) await writeCollection(bannersRef, data.banners);
       if (data.customSections) await writeCollection(customSectionsRef, data.customSections);
-      showSync('¡Datos restaurados con éxito! ✅', 'success', 3000);
+      showSync('¡Datos restaurados! ✅', 'success', 3000);
       setTimeout(() => window.location.reload(), 1500);
     } catch (err) {
       console.error(err);
@@ -774,54 +795,86 @@ document.getElementById('importBackupBtn').addEventListener('click', () => docum
 document.getElementById('restoreFileInput').addEventListener('change', importBackup);
 
 // ================================================================
-// ⬆️⬇️ ARREGLO 2: REORDENAR CATEGORÍAS CON FLECHAS
+// 🖱️ ARRASTRAR Y SOLTAR (DRAG & DROP) - CORREGIDO Y ESTABLE
 // ================================================================
-async function moveCategory(catName, direction) {
-  showSync('Reordenando...', 'loading', 0);
-  try {
-    const categoryMap = {};
-    products.forEach(p => {
-      const cat = p.category || "Sin categoría";
-      const order = p.categoryOrder !== undefined ? p.categoryOrder : 99;
-      if (!categoryMap[cat]) categoryMap[cat] = { order: order, ids: [] };
-      categoryMap[cat].ids.push(p.id);
-    });
-    const sortedCats = Object.keys(categoryMap).sort((a, b) => {
-      if (categoryMap[a].order !== categoryMap[b].order) return categoryMap[a].order - categoryMap[b].order;
-      return a.localeCompare(b);
-    });
-    const currentIndex = sortedCats.indexOf(catName);
-    if (currentIndex === -1) return;
+function initDragAndDrop() {
+  if (!adminMode) return;
 
-    if (direction === 'up' && currentIndex > 0) {
-      const targetCat = sortedCats[currentIndex - 1];
-      const tempOrder = categoryMap[catName].order;
-      categoryMap[catName].order = categoryMap[targetCat].order;
-      categoryMap[targetCat].order = tempOrder;
-      const batch = db.batch();
-      categoryMap[catName].ids.forEach(id => batch.update(productsRef.doc(id), { categoryOrder: categoryMap[catName].order }));
-      categoryMap[targetCat].ids.forEach(id => batch.update(productsRef.doc(id), { categoryOrder: categoryMap[targetCat].order }));
-      await batch.commit();
-      showSync('¡Categoría subida! ✅', 'success', 2000);
-    } else if (direction === 'down' && currentIndex < sortedCats.length - 1) {
-      const targetCat = sortedCats[currentIndex + 1];
-      const tempOrder = categoryMap[catName].order;
-      categoryMap[catName].order = categoryMap[targetCat].order;
-      categoryMap[targetCat].order = tempOrder;
-      const batch = db.batch();
-      categoryMap[catName].ids.forEach(id => batch.update(productsRef.doc(id), { categoryOrder: categoryMap[catName].order }));
-      categoryMap[targetCat].ids.forEach(id => batch.update(productsRef.doc(id), { categoryOrder: categoryMap[targetCat].order }));
-      await batch.commit();
-      showSync('¡Categoría bajada! ✅', 'success', 2000);
-    } else {
-      showSync('Ya está en el límite', 'error', 2000);
-    }
-  } catch (error) {
-    console.error(error);
-    showSync('Error al reordenar', 'error', 2000);
+  // 1. BANNERS PRINCIPALES
+  const bannersContainer = document.getElementById('bannersContainer');
+  if (bannersContainer && bannersContainer.children.length > 0) {
+    // Destruir instancia anterior si existe para evitar duplicados
+    if (sortableInstances.has('banners')) sortableInstances.get('banners').destroy();
+    
+    const bannersSortable = new Sortable(bannersContainer, {
+      animation: 150,
+      handle: '.drag-handle-admin',
+      ghostClass: 'sortable-ghost',
+      dragClass: 'sortable-drag',
+      onEnd: async (evt) => {
+        const itemIds = Array.from(bannersContainer.children)
+          .map(child => child.getAttribute('data-id'))
+          .filter(id => id);
+        
+        showSync('Guardando orden...', 'loading', 0);
+        const batch = db.batch();
+        itemIds.forEach((id, index) => {
+          const ref = bannersRef.doc(id);
+          batch.update(ref, { order: index });
+        });
+        
+        try {
+          await batch.commit();
+          showSync('¡Orden guardado! ✅', 'success', 2000);
+        } catch (error) {
+          console.error(error);
+          showSync('Error al guardar', 'error', 2000);
+        }
+      }
+    });
+    sortableInstances.set('banners', bannersSortable);
   }
+
+  // 2. PRODUCTOS POR CATEGORÍA
+  document.querySelectorAll('.products').forEach(grid => {
+    if (grid.children.length > 0) {
+      const catName = grid.getAttribute('data-category') || 'default';
+      
+      // Destruir instancia anterior de esta categoría
+      if (sortableInstances.has(catName)) {
+        sortableInstances.get(catName).destroy();
+      }
+      
+      const gridSortable = new Sortable(grid, {
+        animation: 150,
+        handle: '.drag-handle-admin',
+        ghostClass: 'sortable-ghost',
+        dragClass: 'sortable-drag',
+        onEnd: async (evt) => {
+          const itemIds = Array.from(grid.children)
+            .map(child => child.getAttribute('data-id'))
+            .filter(id => id);
+          
+          showSync('Guardando nuevo orden...', 'loading', 0);
+          const batch = db.batch();
+          itemIds.forEach((id, index) => {
+            const ref = productsRef.doc(id);
+            batch.update(ref, { itemOrder: index });
+          });
+          
+          try {
+            await batch.commit();
+            showSync('¡Orden guardado! ✅', 'success', 2000);
+          } catch (error) {
+            console.error(error);
+            showSync('Error al guardar', 'error', 2000);
+          }
+        }
+      });
+      sortableInstances.set(catName, gridSortable);
+    }
+  });
 }
-window.moveCategory = moveCategory;
 
 // ================================================================
 // ADMIN
@@ -850,8 +903,9 @@ function loginAdmin(password) {
     sessionStorage.setItem('adminAuthenticated', 'true');
     updateAdminUI();
     renderProducts();
-    renderOffers();
     renderFeaturedVideos();
+    renderBanners();
+    setTimeout(initDragAndDrop, 100);
     closeLoginModal();
     showSync('Sesión iniciada', 'success', 1500);
     return true;
@@ -866,8 +920,8 @@ function logoutAdmin() {
     sessionStorage.removeItem('adminAuthenticated');
     updateAdminUI();
     renderProducts();
-    renderOffers();
     renderFeaturedVideos();
+    renderBanners();
   }
 }
 document.getElementById('adminLoginForm').addEventListener('submit', (e) => {
@@ -989,7 +1043,7 @@ function removeFromCart(index) {
 }
 
 // ================================================================
-// 🚀 ARREGLO 3: MENSAJE DE WHATSAPP SIMPLIFICADO + DESCUENTO DE STOCK
+// 🚀 ENVIAR A WHATSAPP
 // ================================================================
 async function sendToWhatsapp() {
   if (cart.length === 0) return alert("Carrito vacío");
@@ -1002,17 +1056,16 @@ async function sendToWhatsapp() {
   
   if (!phone) {
     if (phoneInput) { phoneInput.classList.add('error'); phoneInput.focus(); }
-    alert("⚠️ Por favor, ingresa tu número de celular."); return;
+    alert("⚠️ Ingresa tu número de celular."); return;
   }
   if (!storeAddress) {
     if (addressInput) { addressInput.classList.add('error'); addressInput.focus(); }
-    alert("⚠️ Por favor, ingresa el nombre de tu tienda y dirección."); return;
+    alert("⚠️ Ingresa el nombre de tu tienda y dirección."); return;
   }
 
-  showSync('Procesando pedido y actualizando stock...', 'loading', 0);
+  showSync('Procesando pedido...', 'loading', 0);
 
   try {
-    // 1. Descontar stock en Firebase de forma segura
     const batch = db.batch();
     for (const item of cart) {
       const productRef = productsRef.doc(item.id);
@@ -1020,11 +1073,8 @@ async function sendToWhatsapp() {
     }
     await batch.commit();
 
-    // 2. Generar mensaje SIMPLIFICADO (ARREGLO 3)
     let total = 0, totalSavings = 0;
-    let text = `🛍️ *NUEVO PEDIDO*\n\n`;
-    text += `📱 *Celular:* ${phone}\n`;
-    text += `🏪 *Tienda/Dirección:* ${storeAddress}\n\n`;
+    let text = `🛍️ *NUEVO PEDIDO*\n\n📱 *Celular:* ${phone}\n🏪 *Tienda/Dirección:* ${storeAddress}\n\n`;
     text += `📅 _${new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })} ${new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}_\n`;
     text += `━━━━━━━━━━━━━━━━━━━━━━\n📦 *DETALLE*\n━━━━━━━━━━━━━━━━━━━━━━\n\n`;
     
@@ -1051,7 +1101,6 @@ async function sendToWhatsapp() {
     if (totalSavings > 0) text += `🎉 _¡Ahorro total: ${totalSavings.toFixed(2)} Bs!_\n`;
     text += `━━━━━━━━━━━━━━━━━━━━━━\n\n🙏 _¡Gracias por tu compra!_ ✨`;
 
-    // 3. Limpiar carrito y abrir WhatsApp
     cart = [];
     localStorage.setItem('cart_v26', JSON.stringify(cart));
     updateCartCount();
@@ -1059,16 +1108,16 @@ async function sendToWhatsapp() {
     closeCart();
 
     window.open(`https://wa.me/59163882223?text=${encodeURIComponent(text)}`, "_blank");
-    showSync('¡Pedido enviado y stock actualizado! ✅', 'success', 3000);
+    showSync('¡Pedido enviado! ✅', 'success', 3000);
 
   } catch (error) {
-    console.error("Error al procesar pedido:", error);
-    showSync('Error al procesar el pedido. Intenta de nuevo.', 'error', 3000);
+    console.error("Error:", error);
+    showSync('Error al procesar', 'error', 3000);
   }
 }
 
 // ================================================================
-// RENDERIZADO SEGURO DE PRODUCTOS
+// RENDERIZADO SEGURO DE PRODUCTOS (CON ORDEN ESTABLE)
 // ================================================================
 function renderProducts() {
   const container = document.getElementById('productsContainer');
@@ -1076,7 +1125,7 @@ function renderProducts() {
   container.innerHTML = '';
 
   if (products.length === 0 && customSections.length === 0) {
-    container.innerHTML = `<div style="text-align:center; padding:60px 20px; color:var(--muted);"><div style="font-size:3rem; margin-bottom:10px;">📦</div><p style="font-size:1.2rem;">Aún no hay productos</p>${adminMode ? '<p style="margin-top:10px;">Hacé clic en "+ Producto" o "🧩 Bloques"</p>' : ''}</div>`;
+    container.innerHTML = `<div style="text-align:center; padding:60px 20px; color:var(--muted);"><div style="font-size:3rem; margin-bottom:10px;">📦</div><p style="font-size:1.2rem;">Aún no hay productos</p>${adminMode ? '<p style="margin-top:10px;">Hacé clic en "+ Producto"</p>' : ''}</div>`;
     return;
   }
 
@@ -1098,21 +1147,21 @@ function renderProducts() {
   });
 
   const renderCategory = (cat) => {
-    const catProducts = products.filter(p => (p.category || "Sin categoría").trim() === cat);
+    // ORDEN ESTABLE: Primero por itemOrder, luego por createdAt para evitar saltos aleatorios
+    const catProducts = products.filter(p => (p.category || "Sin categoría").trim() === cat)
+      .sort((a, b) => {
+        const orderA = a.itemOrder !== undefined ? a.itemOrder : 999;
+        const orderB = b.itemOrder !== undefined ? b.itemOrder : 999;
+        if (orderA !== orderB) return orderA - orderB;
+        return (a.createdAt || 0) - (b.createdAt || 0);
+      });
+    
     let html = `<div class="category-section">
       <div class="category-wrapper-title">
-        <h2>
-          ${cat}
-          ${adminMode ? `
-            <div style="display:flex; gap:8px; margin-left:15px;">
-              <button class="btn btn-secondary" style="padding:4px 10px; font-size:1.2rem; line-height:1;" onclick="moveCategory('${cat.replace(/'/g, "\\'")}', 'up')" title="Subir categoría">⬆️</button>
-              <button class="btn btn-secondary" style="padding:4px 10px; font-size:1.2rem; line-height:1;" onclick="moveCategory('${cat.replace(/'/g, "\\'")}', 'down')" title="Bajar categoría">⬇️</button>
-            </div>
-          ` : ''}
-        </h2>
+        <h2>${cat}</h2>
         <span class="cat-ornament">✦ ✦ ✦</span>
       </div>
-      <div class="products">`;
+      <div class="products" data-category="${cat}">`;
     
     catProducts.forEach(p => {
       const img = p.media && p.media[0] ? convertMediaUrl(p.media[0], 800) : '';
@@ -1126,8 +1175,16 @@ function renderProducts() {
       } else {
         priceHtml = `<p class="price">${Number(p.price || 0).toFixed(2)} Bs</p>`;
       }
+      
+      let linkHtml = '';
+      if (adminMode && p.productLink) {
+        const displayLink = p.productLink.length > 30 ? p.productLink.substring(0, 30) + '...' : p.productLink;
+        linkHtml = `<div style="margin-top:8px;"><a href="${p.productLink}" target="_blank" class="btn btn-link" title="${p.productLink}">🔗 Ver referencia</a></div>`;
+      }
+      
       html += `
-        <div class="product">
+        <div class="product" data-id="${p.id}">
+          <div class="drag-handle-admin" title="Arrastrar para reordenar">⋮</div>
           <div class="product-media" ${clickAction}>
             ${img ? `<img src="${img}" loading="lazy" alt="${p.title}">` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--muted);">📷</div>'}
             <span class="stock-badge ${inStock ? 'stock-ok' : 'stock-none'}">${inStock ? 'Disponible' : 'Sin stock'}</span>
@@ -1137,6 +1194,7 @@ function renderProducts() {
             ${p.code ? `<p class="product-code">Cód: ${p.code}</p>` : ''}
             <p class="product-desc">${p.description || ''}</p>
             ${priceHtml}
+            ${linkHtml}
             <button class="btn btn-primary" onclick="addToCart('${p.id}')" style="width:100%; margin-top:10px;" ${!inStock ? 'disabled' : ''}>${inStock ? 'Agregar al carrito' : 'Sin stock'}</button>
             ${adminMode ? `<div style="display:flex; gap:8px; margin-top:8px;"><button class="btn btn-secondary" onclick="editProduct('${p.id}')" style="flex:1;">✏️ Editar</button><button class="btn btn-danger" onclick="deleteProduct('${p.id}')" style="flex:1;">🗑️ Eliminar</button></div>` : ''}
           </div>
@@ -1193,44 +1251,8 @@ function renderProducts() {
 
   container.innerHTML = finalHtml;
   updateCategorySuggestions();
-}
-
-function renderOffers() {
-  const container = document.getElementById('offersContainer');
-  if (!container) return;
-  const offerProducts = products.filter(p => p.offerPrice > 0 && p.offerPrice < (p.price || 0));
-  if (offerProducts.length === 0) { container.innerHTML = ''; return; }
   
-  let html = `<div class="offers-section"><div class="category-wrapper-title"><h2>🔥 Ofertas Especiales</h2><span class="cat-ornament">✦ ✦ ✦</span></div><div class="offers-grid">`;
-  offerProducts.forEach(p => {
-    const img = p.media && p.media[0] ? convertMediaUrl(p.media[0], 1200) : '';
-    const inStock = p.stock > 0;
-    const clickAction = p.media && p.media.length > 0 ? `onclick="openMediaModal('${p.id}')"` : '';
-    const savings = ((p.price - p.offerPrice) / p.price * 100).toFixed(0);
-    html += `
-      <div class="product">
-        <div class="product-media" ${clickAction}>
-          ${img ? `<img src="${img}" loading="lazy" alt="${p.title}">` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--muted);">📷</div>'}
-          <span class="offer-badge-promo">-${savings}%</span>
-          <span class="stock-badge ${inStock ? 'stock-ok' : 'stock-none'}">${inStock ? 'Disponible' : 'Sin stock'}</span>
-        </div>
-        <div class="product-body">
-          <h3 class="product-title">${p.title}</h3>
-          ${p.code ? `<p class="product-code">Cód: ${p.code}</p>` : ''}
-          <p class="product-desc">${p.description || ''}</p>
-          <div class="price">
-            <span class="price-original">${Number(p.price).toFixed(2)} Bs</span>
-            <span class="price-offer">${Number(p.offerPrice).toFixed(2)} Bs</span>
-            <span class="offer-badge">-${savings}%</span>
-          </div>
-          <div class="price-savings">¡Ahorrás ${Number(p.price - p.offerPrice).toFixed(2)} Bs!</div>
-          <button class="btn btn-primary" onclick="addToCart('${p.id}')" style="width:100%; margin-top:10px;" ${!inStock ? 'disabled' : ''}>${inStock ? 'Agregar al carrito' : 'Sin stock'}</button>
-          ${adminMode ? `<div style="display:flex; gap:8px; margin-top:8px;"><button class="btn btn-secondary" onclick="editProduct('${p.id}')" style="flex:1;">✏️ Editar</button><button class="btn btn-danger" onclick="deleteProduct('${p.id}')" style="flex:1;">🗑️ Eliminar</button></div>` : ''}
-        </div>
-      </div>`;
-  });
-  html += `</div></div>`;
-  container.innerHTML = html;
+  setTimeout(initDragAndDrop, 100);
 }
 
 function renderFeaturedVideos() {
@@ -1251,6 +1273,15 @@ function renderBanners() {
   const container = document.getElementById('bannersContainer');
   if (!container) return;
   if (banners.length === 0) { container.innerHTML = ''; return; }
+  
+  // ORDEN ESTABLE PARA BANNERS
+  banners.sort((a, b) => {
+    const orderA = a.order !== undefined ? a.order : 999;
+    const orderB = b.order !== undefined ? b.order : 999;
+    if (orderA !== orderB) return orderA - orderB;
+    return (a.createdAt || 0) - (b.createdAt || 0);
+  });
+
   let html = '';
   banners.forEach(banner => {
     const imgUrl = convertMediaUrl(banner.imageUrl, 1920);
@@ -1259,9 +1290,15 @@ function renderBanners() {
     const hasLink = banner.linkUrl && banner.linkUrl.trim() !== '';
     const clickAction = hasLink ? `onclick="window.open('${banner.linkUrl}', '_blank')"` : '';
     const bannerSize = banner.size || 'banner-standard';
-    html += `<div class="banner-item ${bannerSize}" ${clickAction}><img src="${imgUrl}" alt="${banner.title || 'Banner'}" loading="lazy">${(hasTitle || hasSubtitle) ? `<div class="banner-overlay">${hasTitle ? `<div class="banner-title">${banner.title}</div>` : ''}${hasSubtitle ? `<div class="banner-subtitle">${banner.subtitle}</div>` : ''}</div>` : ''}<div class="banner-admin"><button class="btn" onclick="event.stopPropagation(); editBanner('${banner.id}')">✏️ Editar</button><button class="btn btn-danger" onclick="event.stopPropagation(); deleteBanner('${banner.id}')">🗑️</button></div></div>`;
+    html += `<div class="banner-item ${bannerSize}" data-id="${banner.id}" ${clickAction}>
+      <div class="drag-handle-admin" title="Arrastrar para reordenar">⋮</div>
+      <img src="${imgUrl}" alt="${banner.title || 'Banner'}" loading="lazy">
+      ${(hasTitle || hasSubtitle) ? `<div class="banner-overlay">${hasTitle ? `<div class="banner-title">${banner.title}</div>` : ''}${hasSubtitle ? `<div class="banner-subtitle">${banner.subtitle}</div>` : ''}</div>` : ''}
+      <div class="banner-admin"><button class="btn" onclick="event.stopPropagation(); editBanner('${banner.id}')">✏️ Editar</button><button class="btn btn-danger" onclick="event.stopPropagation(); deleteBanner('${banner.id}')">🗑️</button></div>
+    </div>`;
   });
   container.innerHTML = html;
+  setTimeout(initDragAndDrop, 100);
 }
 
 // ================================================================
@@ -1439,6 +1476,7 @@ document.getElementById('productForm').addEventListener('submit', async function
   const productData = {
     code: document.getElementById('productCode').value.trim(),
     categoryOrder: 99,
+    itemOrder: 999,
     title: document.getElementById('title').value.trim(),
     fontStyle: document.getElementById('fontStyle').value,
     category: document.getElementById('category').value.trim(),
@@ -1448,6 +1486,12 @@ document.getElementById('productForm').addEventListener('submit', async function
     stock: parseInt(document.getElementById('stock').value) || 0,
     description: document.getElementById('description').value.trim(),
     media: document.getElementById('mediaLinks').value.split('\n').map(l => l.trim()).filter(Boolean),
+    productMeasure: document.getElementById('productMeasure').value.trim(),
+    productWeight: parseFloat(document.getElementById('productWeight').value) || 0,
+    costUSD: parseFloat(document.getElementById('costUSD').value) || 0,
+    costBS: parseFloat(document.getElementById('costBS').value) || 0,
+    productLink: document.getElementById('productLink').value.trim(),
+    additionalInfo: document.getElementById('additionalInfo').value.trim(),
     updatedAt: Date.now()
   };
   try {
@@ -1473,6 +1517,12 @@ function editProduct(id) {
   document.getElementById('stock').value = product.stock || '';
   document.getElementById('description').value = product.description || '';
   document.getElementById('mediaLinks').value = (product.media || []).join('\n');
+  document.getElementById('productMeasure').value = product.productMeasure || '';
+  document.getElementById('productWeight').value = product.productWeight || '';
+  document.getElementById('costUSD').value = product.costUSD || '';
+  document.getElementById('costBS').value = product.costBS || '';
+  document.getElementById('productLink').value = product.productLink || '';
+  document.getElementById('additionalInfo').value = product.additionalInfo || '';
   updateCategorySuggestions();
   document.getElementById('productDialog').showModal();
 }
@@ -1488,7 +1538,7 @@ async function deleteProduct(id) {
 document.getElementById('addVideoBtn').addEventListener('click', () => {
   if (!adminMode) { alert('⚠️ Iniciá sesión'); return; }
   editingVideoId = null;
-  document.getElementById('videoDialogTitle').textContent = "🎬 Agregar Video Principal";
+  document.getElementById('videoDialogTitle').textContent = "🎬 Agregar Video";
   document.getElementById('videoForm').reset();
   document.getElementById('videoDialog').showModal();
 });
@@ -1527,7 +1577,7 @@ async function deleteVideo(id) {
 document.getElementById('addBannerBtn').addEventListener('click', () => {
   if (!adminMode) { alert('⚠️ Iniciá sesión'); return; }
   editingBannerId = null;
-  document.getElementById('bannerDialogTitle').textContent = "🖼️ Agregar Banner Principal";
+  document.getElementById('bannerDialogTitle').textContent = "🖼️ Agregar Banner";
   document.getElementById('bannerForm').reset();
   document.getElementById('bannerDialog').showModal();
 });
@@ -1590,7 +1640,7 @@ function updateCsCategoryOptions() {
 document.getElementById('addCustomSectionBtn').addEventListener('click', () => {
   if (!adminMode) { alert('⚠️ Iniciá sesión'); return; }
   editingCsId = null;
-  document.getElementById('customSectionDialogTitle').textContent = "🧩 Agregar Bloque entre Categorías";
+  document.getElementById('customSectionDialogTitle').textContent = "🧩 Agregar Bloque";
   document.getElementById('customSectionForm').reset();
   document.getElementById('csOrder').value = 1;
   updateCsCategoryOptions();
@@ -1605,9 +1655,7 @@ document.getElementById('customSectionForm').addEventListener('submit', async fu
   const data = { type: type, afterCategory: document.getElementById('csAfterCategory').value, order: parseInt(document.getElementById('csOrder').value) || 1, updatedAt: Date.now() };
   if (type === 'banner') {
     data.title = document.getElementById('csTitle').value.trim();
-    data.subtitle = document.getElementById('csSubtitle').value.trim();
     data.imageUrl = document.getElementById('csImageUrl').value.trim();
-    data.linkUrl = document.getElementById('csLinkUrl').value.trim();
     data.size = document.getElementById('csSize').value;
   } else {
     data.title = document.getElementById('csVideoTitle').value.trim();
@@ -1625,7 +1673,7 @@ function editCustomSection(id) {
   const section = customSections.find(s => s.id === id);
   if (!section) return;
   editingCsId = id;
-  document.getElementById('customSectionDialogTitle').textContent = "🧩 Editar Bloque";
+  document.getElementById('customSectionDialogTitle').textContent = "✏️ Editar Bloque";
   document.getElementById('csType').value = section.type;
   toggleCsFields();
   updateCsCategoryOptions();
@@ -1633,9 +1681,7 @@ function editCustomSection(id) {
   document.getElementById('csOrder').value = section.order || 1;
   if (section.type === 'banner') {
     document.getElementById('csTitle').value = section.title || '';
-    document.getElementById('csSubtitle').value = section.subtitle || '';
     document.getElementById('csImageUrl').value = section.imageUrl || '';
-    document.getElementById('csLinkUrl').value = section.linkUrl || '';
     document.getElementById('csSize').value = section.size || 'banner-standard';
   } else {
     document.getElementById('csVideoTitle').value = section.title || '';
@@ -1665,9 +1711,7 @@ updateAdminUI();
 loadCartClientInfo();
 updateCartCount();
 
-// Llamadas iniciales de seguridad para que NUNCA quede en blanco
 renderProducts();
-renderOffers();
 renderFeaturedVideos();
 renderBanners();
 </script>
