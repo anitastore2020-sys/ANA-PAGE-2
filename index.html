@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<!-- v4.5.0-fix-instagram-videos-plus-scroll-top -->
+<!-- v4.6.0-instagram-fix-plus-memory -->
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Galería de Productos Editable</title>
@@ -119,7 +119,6 @@
   .admin-on .admin-only { display: inline-block !important; }
   .admin-on .drag-handle-admin { display: flex !important; }
 
-  /* ESTILOS DRAG & DROP */
   .drag-handle-admin {
     position: absolute; top: 10px; left: 10px; z-index: 20;
     width: 32px; height: 32px; background: rgba(255,255,255,0.95);
@@ -265,6 +264,37 @@
   .login-buttons { display: flex; gap: 10px; margin-top: 10px; }
   .login-buttons .btn { flex: 1; }
 
+  /* ESTILO UNIFICADO PARA TODOS LOS INPUTS DEL FORMULARIO */
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: inherit;
+    background: white;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(159, 18, 57, 0.1);
+  }
+  
+  /* Sección admin con diseño unificado */
+  .admin-fields-section {
+    margin-bottom: 12px;
+    padding: 15px;
+    background: #fff0f5;
+    border-radius: 8px;
+    border: 1px dashed var(--accent);
+  }
+  .admin-fields-section h4 {
+    margin-bottom: 12px;
+    color: var(--accent);
+    font-size: 0.9rem;
+  }
+
   /* BOTÓN VOLVER ARRIBA */
   .scroll-top-btn {
     position: fixed;
@@ -294,6 +324,20 @@
   .scroll-top-btn:hover {
     transform: translateY(-5px);
     box-shadow: 0 6px 20px rgba(159, 18, 57, 0.6);
+  }
+
+  /* INDICADOR DE CAMPO MEMORIZADO */
+  .memory-indicator {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.75rem;
+    color: #166534;
+    background: rgba(22, 101, 52, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    pointer-events: none;
   }
 
   @media (max-width: 1024px) { .videos-grid, .products { grid-template-columns: repeat(3, 1fr); } }
@@ -389,7 +433,6 @@
   <span id="syncText">Cargando...</span>
 </div>
 
-<!-- BOTÓN VOLVER ARRIBA -->
 <button class="scroll-top-btn" id="scrollTopBtn" onclick="scrollToTop()" title="Volver arriba">↑</button>
 
 <div class="cart-overlay" id="cartOverlay"></div>
@@ -440,18 +483,18 @@
     <form id="productForm">
       <div style="margin-bottom:12px;">
         <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">📝 Título del producto</label>
-        <input id="title" type="text" placeholder="Ej: Gel de Construcción" style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;">
+        <input id="title" type="text" placeholder="Ej: Gel de Construcción" class="form-input">
       </div>
       
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
         <div>
           <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">🏷️ Código de Producto</label>
-          <input id="productCode" type="text" placeholder="Ej: PROD-001" style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;">
+          <input id="productCode" type="text" placeholder="Ej: PROD-001" class="form-input">
         </div>
-        <div>
+        <div style="position:relative;">
           <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">📂 Categoría</label>
           <div class="category-wrapper">
-            <input id="category" type="text" placeholder="Ej: Uñas, Ropa" list="categoryList" autocomplete="off" style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;">
+            <input id="category" type="text" placeholder="Ej: Uñas, Ropa" list="categoryList" autocomplete="off" class="form-input">
             <span class="category-hint">💡 Sugerencias</span>
           </div>
           <datalist id="categoryList"></datalist>
@@ -460,7 +503,7 @@
 
       <div style="margin-bottom:12px;">
         <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">🎨 Estilo de fuente</label>
-        <select id="fontStyle" style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;">
+        <select id="fontStyle" class="form-select">
           <option value="font-style-1">Elegante</option>
           <option value="font-style-2">Moderna</option>
           <option value="font-style-3">Editorial</option>
@@ -471,70 +514,70 @@
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
         <div>
           <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">💵 Precio Normal (Bs)</label>
-          <input id="price" type="number" step="0.01" placeholder="0.00" style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;">
+          <input id="price" type="number" step="0.01" placeholder="0.00" class="form-input">
         </div>
         <div>
           <label style="font-size:0.85rem; font-weight:600; color:#c02639; display:block; margin-bottom:4px;">🔥 Precio Oferta (Bs)</label>
-          <input id="offerPrice" type="number" step="0.01" placeholder="0.00" style="width:100%; padding:12px; border: 1px solid #c02639; border-radius: 8px;">
+          <input id="offerPrice" type="number" step="0.01" placeholder="0.00" class="form-input">
         </div>
       </div>
 
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
         <div>
           <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">📦 Precio Mayorista (Bs)</label>
-          <input id="wholesalePrice" type="number" step="0.01" placeholder="0.00" style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;">
+          <input id="wholesalePrice" type="number" step="0.01" placeholder="0.00" class="form-input">
         </div>
         <div>
           <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">🏷️ Stock disponible</label>
-          <input id="stock" type="number" placeholder="0" style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;">
+          <input id="stock" type="number" placeholder="0" class="form-input">
         </div>
       </div>
 
-      <!-- CAMPOS ADMIN -->
-      <div class="admin-only" style="margin-bottom:12px; padding:15px; background:#fff0f5; border-radius:8px; border:1px dashed var(--accent);">
-        <h4 style="margin-bottom:12px; color:var(--accent); font-size:0.9rem;">📋 Campos adicionales (Solo Admin)</h4>
+      <!-- CAMPOS ADMIN CON DISEÑO UNIFICADO -->
+      <div class="admin-only admin-fields-section">
+        <h4>📋 Campos adicionales (Solo Admin)</h4>
         
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
           <div>
             <label style="font-size:0.8rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">📏 Medida del producto</label>
-            <input id="productMeasure" type="text" placeholder="Ej: 500ml, 1kg, 30cm" style="width:100%; padding:10px; border: 1px solid #ddd; border-radius: 8px; font-size:0.9rem;">
+            <input id="productMeasure" type="text" placeholder="Ej: 500ml, 1kg, 30cm" class="form-input">
           </div>
           <div>
             <label style="font-size:0.8rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">⚖️ Peso (gramos)</label>
-            <input id="productWeight" type="number" placeholder="Ej: 500" style="width:100%; padding:10px; border: 1px solid #ddd; border-radius: 8px; font-size:0.9rem;">
+            <input id="productWeight" type="number" placeholder="Ej: 500" class="form-input">
           </div>
         </div>
 
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
           <div>
             <label style="font-size:0.8rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">💰 Costo USD</label>
-            <input id="costUSD" type="number" step="0.01" placeholder="0.00" style="width:100%; padding:10px; border: 1px solid #ddd; border-radius: 8px; font-size:0.9rem;">
+            <input id="costUSD" type="number" step="0.01" placeholder="0.00" class="form-input">
           </div>
           <div>
             <label style="font-size:0.8rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">💰 Costo Bs</label>
-            <input id="costBS" type="number" step="0.01" placeholder="0.00" style="width:100%; padding:10px; border: 1px solid #ddd; border-radius: 8px; font-size:0.9rem;">
+            <input id="costBS" type="number" step="0.01" placeholder="0.00" class="form-input">
           </div>
         </div>
 
         <div style="margin-bottom:12px;">
           <label style="font-size:0.8rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">🔗 Link de referencia</label>
-          <input id="productLink" type="url" placeholder="https://..." style="width:100%; padding:10px; border: 1px solid #ddd; border-radius: 8px; font-size:0.9rem;">
+          <input id="productLink" type="url" placeholder="https://..." class="form-input">
         </div>
 
         <div style="margin-bottom:12px;">
           <label style="font-size:0.8rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">📝 Información adicional</label>
-          <textarea id="additionalInfo" placeholder="Notas internas, proveedor, etc..." rows="2" style="width:100%; padding:10px; border: 1px solid #ddd; border-radius: 8px; font-size:0.9rem;"></textarea>
+          <textarea id="additionalInfo" placeholder="Notas internas, proveedor, etc..." rows="2" class="form-textarea"></textarea>
         </div>
       </div>
 
       <div style="margin-bottom:12px;">
         <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">📄 Descripción</label>
-        <textarea id="description" placeholder="Detalles del producto..." rows="3" style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;"></textarea>
+        <textarea id="description" placeholder="Detalles del producto..." rows="3" class="form-textarea"></textarea>
       </div>
 
       <div style="margin-bottom:12px;">
         <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">🖼️ Links de imágenes/GIFs</label>
-        <textarea id="mediaLinks" placeholder="Pega los links aquí (uno por línea)" rows="4" style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;"></textarea>
+        <textarea id="mediaLinks" placeholder="Pega los links aquí (uno por línea)" rows="4" class="form-textarea"></textarea>
       </div>
 
       <div style="margin-top:20px; display:flex; gap:10px; flex-wrap: wrap;">
@@ -551,15 +594,15 @@
     <form id="videoForm">
       <div style="margin-bottom:12px;">
         <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">Título del video</label>
-        <input id="videoTitle" type="text" placeholder="Ej: Tutorial de uso" style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;">
+        <input id="videoTitle" type="text" placeholder="Ej: Tutorial de uso" class="form-input">
       </div>
       <div style="margin-bottom:12px;">
         <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">Descripción (opcional)</label>
-        <textarea id="videoDesc" placeholder="Breve descripción..." rows="2" style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;"></textarea>
+        <textarea id="videoDesc" placeholder="Breve descripción..." rows="2" class="form-textarea"></textarea>
       </div>
       <div style="margin-bottom:12px;">
         <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">URL del video</label>
-        <input id="videoUrl" type="url" placeholder="YouTube, TikTok, Instagram, Facebook..." style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;">
+        <input id="videoUrl" type="url" placeholder="YouTube, TikTok, Instagram, Facebook..." class="form-input">
         <p style="font-size:0.75rem; color:var(--muted); margin:4px 0 0 0;">💡 Soporta: YouTube, Instagram, TikTok, Facebook, Vimeo, Drive</p>
       </div>
       <div style="margin-top:20px; display:flex; gap:10px; flex-wrap: wrap;">
@@ -576,23 +619,23 @@
     <form id="bannerForm">
       <div style="margin-bottom:12px;">
         <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">Título principal</label>
-        <input id="bannerTitle" type="text" placeholder="Ej: ¡Nueva Colección!" style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;">
+        <input id="bannerTitle" type="text" placeholder="Ej: ¡Nueva Colección!" class="form-input">
       </div>
       <div style="margin-bottom:12px;">
         <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">Subtítulo (opcional)</label>
-        <input id="bannerSubtitle" type="text" placeholder="Ej: 50% de descuento" style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;">
+        <input id="bannerSubtitle" type="text" placeholder="Ej: 50% de descuento" class="form-input">
       </div>
       <div style="margin-bottom:12px;">
         <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">URL de la imagen</label>
-        <input id="bannerImage" type="url" placeholder="https://..." style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;">
+        <input id="bannerImage" type="url" placeholder="https://..." class="form-input">
       </div>
       <div style="margin-bottom:12px;">
         <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">Link al hacer clic (opcional)</label>
-        <input id="bannerLink" type="url" placeholder="https://..." style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;">
+        <input id="bannerLink" type="url" placeholder="https://..." class="form-input">
       </div>
       <div style="margin:12px 0;">
         <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">📏 Tamaño del banner:</label>
-        <select id="bannerSize" style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px; font-size:0.95rem;">
+        <select id="bannerSize" class="form-select">
           <option value="banner-small">Rectangular Pequeño (1920 × 400px)</option>
           <option value="banner-compact">Rectangular Compacto (1920 × 500px)</option>
           <option value="banner-standard" selected>Rectangular Estándar (1920 × 540px) ⭐</option>
@@ -617,33 +660,33 @@
     <form id="customSectionForm">
       <div style="margin-bottom:12px;">
         <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">Tipo de bloque</label>
-        <select id="csType" style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;" onchange="toggleCsFields()">
+        <select id="csType" class="form-select" onchange="toggleCsFields()">
           <option value="banner">🖼️ Banner</option>
           <option value="video">🎬 Video</option>
         </select>
       </div>
       <div style="margin-bottom:12px;">
         <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">📍 Mostrar después de la categoría:</label>
-        <select id="csAfterCategory" style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;">
+        <select id="csAfterCategory" class="form-select">
           <option value="">🔝 Al principio (antes de todas)</option>
         </select>
       </div>
       <div style="margin-bottom:12px;">
         <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">🔢 Orden</label>
-        <input id="csOrder" type="number" value="1" style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;">
+        <input id="csOrder" type="number" value="1" class="form-input">
       </div>
       <div id="csBannerFields">
         <div style="margin-bottom:12px;">
           <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">Título del Banner</label>
-          <input id="csTitle" type="text" placeholder="Ej: ¡Promo!" style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;">
+          <input id="csTitle" type="text" placeholder="Ej: ¡Promo!" class="form-input">
         </div>
         <div style="margin-bottom:12px;">
           <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">URL de la Imagen</label>
-          <input id="csImageUrl" type="url" placeholder="https://..." style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;">
+          <input id="csImageUrl" type="url" placeholder="https://..." class="form-input">
         </div>
         <div style="margin-bottom:12px;">
           <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">Tamaño</label>
-          <select id="csSize" style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;">
+          <select id="csSize" class="form-select">
             <option value="banner-compact">Compacto (500px)</option>
             <option value="banner-standard" selected>Estándar (540px) ⭐</option>
             <option value="banner-square-800">Cuadrado (800x800px)</option>
@@ -653,11 +696,11 @@
       <div id="csVideoFields" style="display:none;">
         <div style="margin-bottom:12px;">
           <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">Título del Video</label>
-          <input id="csVideoTitle" type="text" placeholder="Ej: Tutorial" style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;">
+          <input id="csVideoTitle" type="text" placeholder="Ej: Tutorial" class="form-input">
         </div>
         <div style="margin-bottom:12px;">
           <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">URL del Video</label>
-          <input id="csVideoUrl" type="url" placeholder="YouTube, TikTok..." style="width:100%; padding:12px; border: 1px solid #ddd; border-radius: 8px;">
+          <input id="csVideoUrl" type="url" placeholder="YouTube, TikTok..." class="form-input">
         </div>
       </div>
       <div style="margin-top:20px; display:flex; gap:10px; flex-wrap: wrap;">
@@ -720,7 +763,6 @@ let editingCsId = null;
 let currentMediaList = [];
 let currentMediaIndex = 0;
 
-// Mapa global para guardar instancias de Sortable y evitar duplicados
 const sortableInstances = new Map();
 
 function showSync(message, type = 'loading', duration = 2000) {
@@ -734,6 +776,50 @@ function showSync(message, type = 'loading', duration = 2000) {
   else if (type === 'error') icon.textContent = '❌';
   if (duration > 0) setTimeout(() => indicator.classList.remove('show'), duration);
 }
+
+// ================================================================
+// 🧠 SISTEMA DE MEMORIA - GUARDAR Y RECUPERAR DATOS
+// ================================================================
+function saveFormMemory() {
+  const memory = {
+    category: document.getElementById('category').value,
+    fontStyle: document.getElementById('fontStyle').value,
+    productMeasure: document.getElementById('productMeasure').value,
+    productWeight: document.getElementById('productWeight').value,
+    costUSD: document.getElementById('costUSD').value,
+    costBS: document.getElementById('costBS').value,
+    productLink: document.getElementById('productLink').value,
+    additionalInfo: document.getElementById('additionalInfo').value
+  };
+  localStorage.setItem('formMemory_v1', JSON.stringify(memory));
+}
+
+function loadFormMemory() {
+  const saved = localStorage.getItem('formMemory_v1');
+  if (!saved) return;
+  try {
+    const memory = JSON.parse(saved);
+    if (memory.category) document.getElementById('category').value = memory.category;
+    if (memory.fontStyle) document.getElementById('fontStyle').value = memory.fontStyle;
+    if (memory.productMeasure) document.getElementById('productMeasure').value = memory.productMeasure;
+    if (memory.productWeight) document.getElementById('productWeight').value = memory.productWeight;
+    if (memory.costUSD) document.getElementById('costUSD').value = memory.costUSD;
+    if (memory.costBS) document.getElementById('costBS').value = memory.costBS;
+    if (memory.productLink) document.getElementById('productLink').value = memory.productLink;
+    if (memory.additionalInfo) document.getElementById('additionalInfo').value = memory.additionalInfo;
+  } catch (e) {
+    console.error('Error al cargar memoria:', e);
+  }
+}
+
+// Guardar automáticamente cuando el usuario escribe
+['category', 'fontStyle', 'productMeasure', 'productWeight', 'costUSD', 'costBS', 'productLink', 'additionalInfo'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) {
+    el.addEventListener('input', saveFormMemory);
+    el.addEventListener('change', saveFormMemory);
+  }
+});
 
 // ================================================================
 // 🔥 ESCUCHAR CAMBIOS EN TIEMPO REAL
@@ -836,12 +922,11 @@ document.getElementById('importBackupBtn').addEventListener('click', () => docum
 document.getElementById('restoreFileInput').addEventListener('change', importBackup);
 
 // ================================================================
-// 🖱️ ARRASTRAR Y SOLTAR (DRAG & DROP) - CORREGIDO Y ESTABLE
+// 🖱️ ARRASTRAR Y SOLTAR
 // ================================================================
 function initDragAndDrop() {
   if (!adminMode) return;
 
-  // 1. BANNERS PRINCIPALES
   const bannersContainer = document.getElementById('bannersContainer');
   if (bannersContainer && bannersContainer.children.length > 0) {
     if (sortableInstances.has('banners')) sortableInstances.get('banners').destroy();
@@ -875,7 +960,6 @@ function initDragAndDrop() {
     sortableInstances.set('banners', bannersSortable);
   }
 
-  // 2. PRODUCTOS POR CATEGORÍA
   document.querySelectorAll('.products').forEach(grid => {
     if (grid.children.length > 0) {
       const catName = grid.getAttribute('data-category') || 'default';
@@ -1156,7 +1240,7 @@ async function sendToWhatsapp() {
 }
 
 // ================================================================
-// RENDERIZADO SEGURO DE PRODUCTOS (CON ORDEN ESTABLE)
+// RENDERIZADO DE PRODUCTOS
 // ================================================================
 function renderProducts() {
   const container = document.getElementById('productsContainer');
@@ -1197,7 +1281,7 @@ function renderProducts() {
     let html = `<div class="category-section">
       <div class="category-wrapper-title">
         <h2>${cat}</h2>
-        <span class="cat-ornament">✦ ✦ </span>
+        <span class="cat-ornament">✦ ✦ ✦</span>
       </div>
       <div class="products" data-category="${cat}">`;
     
@@ -1216,7 +1300,6 @@ function renderProducts() {
       
       let linkHtml = '';
       if (adminMode && p.productLink) {
-        const displayLink = p.productLink.length > 30 ? p.productLink.substring(0, 30) + '...' : p.productLink;
         linkHtml = `<div style="margin-top:8px;"><a href="${p.productLink}" target="_blank" class="btn btn-link" title="${p.productLink}">🔗 Ver referencia</a></div>`;
       }
       
@@ -1339,11 +1422,18 @@ function renderBanners() {
 }
 
 // ================================================================
-// UTILIDADES DE LINKS - SOPORTE AMPLIADO DE VIDEOS
+// 🧹 LIMPIEZA DE URLS Y UTILIDADES DE LINKS
 // ================================================================
+function cleanUrl(url) {
+  if (!url) return '';
+  // Quitar todo lo que viene después de ? (parámetros)
+  return url.split('?')[0].split('#')[0].trim();
+}
+
 function getVideoPlatform(url) {
   if (!url) return null;
-  const lower = url.toLowerCase();
+  const clean = cleanUrl(url);
+  const lower = clean.toLowerCase();
   if (lower.includes('youtube.com') || lower.includes('youtu.be')) return 'youtube';
   if (lower.includes('instagram.com')) return 'instagram';
   if (lower.includes('tiktok.com')) return 'tiktok';
@@ -1352,33 +1442,46 @@ function getVideoPlatform(url) {
   if (lower.includes('drive.google.com')) return 'drive';
   if (lower.includes('twitter.com') || lower.includes('x.com')) return 'twitter';
   if (lower.includes('pinterest.com')) return 'pinterest';
-  if (/\.(mp4|webm|ogg|mov)(\?|$)/i.test(url)) return 'direct';
+  if (/\.(mp4|webm|ogg|mov)(\?|$)/i.test(clean)) return 'direct';
   return 'unknown';
 }
 
 function getYoutubeId(url) { 
+  const clean = cleanUrl(url);
   const patterns = [
     /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/))([-\w]+)/,
     /youtube\.com\/watch\?.*v=([-\w]+)/
   ];
   for (const pattern of patterns) {
-    const m = url.match(pattern);
+    const m = clean.match(pattern);
     if (m && m[1]) return m[1];
   }
   return null; 
 }
 
+// 🎯 FUNCIÓN MEJORADA PARA INSTAGRAM - Limpia el URL y extrae el código
 function getInstagramInfo(url) { 
-  const m = url.match(/instagram\.com\/(?:p|reel|tv)\/([-\w]+)/); 
+  const clean = cleanUrl(url); // Limpia parámetros como ?utm_source=...
+  // Busca el código después de /p/, /reel/ o /tv/
+  const m = clean.match(/instagram\.com\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/); 
   return m ? m[1] : null; 
 }
 
+// 🎯 URL LIMPIA DE INSTAGRAM para el embed
+function getInstagramCleanUrl(url) {
+  const code = getInstagramInfo(url);
+  if (!code) return null;
+  return `https://www.instagram.com/p/${code}/`;
+}
+
 function getTikTokInfo(url) { 
-  const m = url.match(/tiktok\.com\/(?:@[\w.-]+\/video\/|video\/)(\d+)/); 
+  const clean = cleanUrl(url);
+  const m = clean.match(/tiktok\.com\/(?:@[\w.-]+\/video\/|video\/)(\d+)/); 
   return m ? m[1] : null; 
 }
 
 function getFacebookInfo(url) {
+  const clean = cleanUrl(url);
   const patterns = [
     /facebook\.com\/.*\/videos\/(\d+)/,
     /facebook\.com\/.*\/videos\/([-\w]+)/,
@@ -1386,19 +1489,21 @@ function getFacebookInfo(url) {
     /fb\.com\/.*\/videos\/(\d+)/
   ];
   for (const pattern of patterns) {
-    const m = url.match(pattern);
+    const m = clean.match(pattern);
     if (m && m[1]) return m[1];
   }
   return null;
 }
 
 function getVimeoId(url) { 
-  const m = url.match(/vimeo\.com\/(\d+)/); 
+  const clean = cleanUrl(url);
+  const m = clean.match(/vimeo\.com\/(\d+)/); 
   return m ? m[1] : null; 
 }
 
 function getTwitterInfo(url) {
-  const m = url.match(/twitter\.com\/[\w]+\/status\/(\d+)/);
+  const clean = cleanUrl(url);
+  const m = clean.match(/twitter\.com\/[\w]+\/status\/(\d+)/);
   return m ? m[1] : null;
 }
 
@@ -1453,7 +1558,7 @@ function getVideoEmbedUrl(url) {
       return ttId ? `https://www.tiktok.com/embed/v2/${ttId}` : null;
     case 'facebook':
       const fbId = getFacebookInfo(url);
-      return fbId ? `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=0&width=560` : null;
+      return fbId ? `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(cleanUrl(url))}&show_text=0&width=560` : null;
     case 'vimeo': 
       const vimeoId = getVimeoId(url); 
       return vimeoId ? `https://player.vimeo.com/video/${vimeoId}?autoplay=1` : null;
@@ -1464,7 +1569,7 @@ function getVideoEmbedUrl(url) {
       const driveId = getDriveId(url); 
       return driveId ? `https://drive.google.com/file/d/${driveId}/preview` : null;
     case 'direct': 
-      return url;
+      return cleanUrl(url);
     default: 
       return null;
   }
@@ -1567,36 +1672,68 @@ function renderLightboxMedia() {
   container.innerHTML = '';
   const media = currentMediaList[currentMediaIndex];
   if (media.type === 'video') {
-    const embedUrl = getVideoEmbedUrl(media.url);
-    if (embedUrl) {
-      if (media.url.match(/\.(mp4|webm|ogg|mov)(\?|$)/i)) {
-        container.innerHTML = `<video src="${media.url}" controls autoplay style="max-width:100%; max-height:82vh;"></video>`;
+    const platform = getVideoPlatform(media.url);
+    
+    // 🎯 TRATAMIENTO ESPECIAL PARA INSTAGRAM
+    if (platform === 'instagram') {
+      const cleanInstagramUrl = getInstagramCleanUrl(media.url);
+      if (cleanInstagramUrl) {
+        // Usar el embed oficial de Instagram con iframe
+        container.innerHTML = `
+          <iframe 
+            src="${cleanInstagramUrl}embed" 
+            style="width:100%; max-width:500px; height:80vh; border:none; background:white;"
+            allowtransparency="true">
+          </iframe>
+        `;
       } else {
-        // Para Instagram y otros embeds, usar contenedor responsivo
-        const platform = getVideoPlatform(media.url);
-        if (platform === 'instagram') {
-          // Instagram necesita un contenedor especial
-          container.innerHTML = `
-            <div style="width:100%; max-width:540px; margin:0 auto;">
-              <blockquote class="instagram-media" data-instgrm-permalink="${media.url}" data-instgrm-version="14" style="background:#FFF; border:0; border-radius:3px; box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 1px; max-width:540px; min-width:326px; padding:0; width:99.375%; width:-webkit-calc(100% - 2px); width:calc(100% - 2px);"></blockquote>
-            </div>
-          `;
-          // Cargar script de Instagram
-          if (!document.getElementById('instagram-embed-script')) {
-            const script = document.createElement('script');
-            script.id = 'instagram-embed-script';
-            script.src = '//www.instagram.com/embed.js';
-            script.async = true;
-            document.body.appendChild(script);
-          } else {
-            window.instgrm.Embeds.process();
-          }
+        container.innerHTML = `<div class="media-fallback"><div class="media-fallback-icon">📷</div><div class="media-fallback-title">No se pudo cargar Instagram</div><a href="${media.url}" target="_blank" class="media-fallback-btn">🔗 Abrir en Instagram</a></div>`;
+      }
+    } 
+    // 🎯 TRATAMIENTO ESPECIAL PARA TIKTOK
+    else if (platform === 'tiktok') {
+      const ttId = getTikTokInfo(media.url);
+      if (ttId) {
+        container.innerHTML = `
+          <iframe 
+            src="https://www.tiktok.com/embed/v2/${ttId}" 
+            style="width:100%; max-width:400px; height:80vh; border:none;"
+            allow="encrypted-media">
+          </iframe>
+        `;
+      } else {
+        container.innerHTML = `<div class="media-fallback"><div class="media-fallback-icon">🎵</div><div class="media-fallback-title">No se pudo cargar TikTok</div><a href="${media.url}" target="_blank" class="media-fallback-btn">🔗 Abrir en TikTok</a></div>`;
+      }
+    }
+    // 🎯 TRATAMIENTO ESPECIAL PARA FACEBOOK
+    else if (platform === 'facebook') {
+      const fbEmbedUrl = getVideoEmbedUrl(media.url);
+      if (fbEmbedUrl) {
+        container.innerHTML = `
+          <iframe 
+            src="${fbEmbedUrl}" 
+            style="width:100%; max-width:560px; height:80vh; border:none; overflow:hidden;"
+            scrolling="no" 
+            allow="encrypted-media"
+            allowtransparency="true">
+          </iframe>
+        `;
+      } else {
+        container.innerHTML = `<div class="media-fallback"><div class="media-fallback-icon">📘</div><div class="media-fallback-title">No se pudo cargar Facebook</div><a href="${media.url}" target="_blank" class="media-fallback-btn">🔗 Abrir en Facebook</a></div>`;
+      }
+    }
+    // Otros videos (YouTube, Vimeo, Drive, directos)
+    else {
+      const embedUrl = getVideoEmbedUrl(media.url);
+      if (embedUrl) {
+        if (media.url.match(/\.(mp4|webm|ogg|mov)(\?|$)/i)) {
+          container.innerHTML = `<video src="${cleanUrl(media.url)}" controls autoplay style="max-width:100%; max-height:82vh;"></video>`;
         } else {
           container.innerHTML = `<iframe src="${embedUrl}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="width:100%; height:100%; border:none;"></iframe>`;
         }
+      } else {
+        container.innerHTML = `<div class="media-fallback"><div class="media-fallback-icon">🎬</div><div class="media-fallback-title">Video no compatible</div><a href="${media.url}" target="_blank" class="media-fallback-btn">🔗 Abrir</a></div>`;
       }
-    } else {
-      container.innerHTML = `<div class="media-fallback"><div class="media-fallback-icon">🎬</div><div class="media-fallback-title">Video no compatible</div><a href="${media.url}" target="_blank" class="media-fallback-btn">🔗 Abrir</a></div>`;
     }
   } else {
     const rawUrl = media.url.trim();
@@ -1625,13 +1762,9 @@ document.getElementById('mediaModal').addEventListener('close', () => {
 // BOTÓN VOLVER ARRIBA
 // ================================================================
 function scrollToTop() {
-  window.scrollTo({
-    top: 0,
-    behavior: 'smooth'
-  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// Mostrar/ocultar botón según scroll
 window.addEventListener('scroll', () => {
   const scrollTopBtn = document.getElementById('scrollTopBtn');
   if (window.pageYOffset > 300) {
@@ -1642,13 +1775,17 @@ window.addEventListener('scroll', () => {
 });
 
 // ================================================================
-// ADMIN PRODUCTOS, VIDEOS, BANNERS Y BLOQUES
+// ADMIN PRODUCTOS
 // ================================================================
 document.getElementById('openAddBtn').addEventListener('click', () => {
   if (!adminMode) { alert('⚠️ Iniciá sesión'); return; }
   editingId = null;
   document.getElementById('dialogTitle').textContent = "📦 Agregar Producto";
   document.getElementById('productForm').reset();
+  
+  // 🧠 CARGAR MEMORIA al abrir el formulario
+  loadFormMemory();
+  
   updateCategorySuggestions();
   document.getElementById('productDialog').showModal();
 });
@@ -1678,6 +1815,10 @@ document.getElementById('productForm').addEventListener('submit', async function
     additionalInfo: document.getElementById('additionalInfo').value.trim(),
     updatedAt: Date.now()
   };
+  
+  // 🧠 GUARDAR MEMORIA al guardar el producto
+  saveFormMemory();
+  
   try {
     if (editingId) { 
       await productsRef.doc(editingId).update(productData); 
@@ -1988,7 +2129,7 @@ renderProducts();
 renderFeaturedVideos();
 renderBanners();
 
-// Prevenir clic derecho en toda la página para proteger imágenes
+// Prevenir clic derecho en imágenes
 document.addEventListener('contextmenu', (e) => {
   if (e.target.tagName === 'IMG') {
     e.preventDefault();
