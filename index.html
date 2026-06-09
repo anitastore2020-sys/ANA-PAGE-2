@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<!-- v4.7.0-video-final-plus-link -->
+<!-- v5.0.0-security-and-stock -->
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Galería de Productos Editable</title>
@@ -26,6 +26,11 @@
   .btn-danger { background: #c02639; color: white; }
   .btn-warning { background: #f59e0b; color: white; }
   .btn-link { background: transparent; color: var(--accent); text-decoration: underline; padding: 4px 8px; font-size: 0.85rem; }
+  .btn-insta { 
+    background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); 
+    color: white; border: none; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 0.9rem;
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; text-decoration: none;
+  }
 
   /* ESTILOS UNIFICADOS DE FORMULARIO */
   .form-input, .form-select, .form-textarea {
@@ -80,49 +85,69 @@
     display: block; width: 100%; text-align: center; font-size: 1.2rem; color: var(--accent); margin-top: 4px; letter-spacing: 8px; opacity: 0.8;
   }
 
-  .videos-grid, .products { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; }
-  .video-card, .product { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); position: relative; }
+  /* GRILLAS SEPARADAS PARA EVITAR CONFLICTOS */
+  .videos-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; }
+  .products { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; }
   
-  .video-media, .product-media {
-    width: 100%; height: 300px; background: #1a0a0e; position: relative; cursor: zoom-in;
-    transition: transform 0.3s ease; display: flex; align-items: center; justify-content: center; overflow: hidden;
+  /* ESTILOS ESPECÍFICOS DE TARJETA DE VIDEO */
+  .video-card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); position: relative; }
+  .video-thumbnail-container {
+    width: 100%; height: 250px; background: #f8e8ee; position: relative;
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+    cursor: pointer; transition: transform 0.2s;
   }
-  .video-media:hover, .product-media:hover { transform: scale(1.02); }
-  .video-media .video-thumb, .product-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .product-media img { object-fit: contain; }
-  
-  .video-media::after, .product-media::after {
-    content: '▶️ Ver'; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(159, 18, 57, 0.75);
-    color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 1.1rem;
-    opacity: 0; transition: opacity 0.3s ease; pointer-events: none;
+  .video-thumbnail-container:hover { transform: scale(1.02); }
+  .video-thumbnail-img { width: 100%; height: 100%; object-fit: cover; }
+  .video-play-icon {
+    position: absolute; font-size: 3rem; color: white; 
+    text-shadow: 0 2px 10px rgba(0,0,0,0.5); pointer-events: none;
   }
-  .product-media::after { content: '🔍 Ver fotos'; }
-  .video-media:hover::after, .product-media:hover::after { opacity: 1; }
+  .video-body { padding: 18px; text-align: center; }
+  .video-title { font-size: 1.1rem; margin-bottom: 8px; font-weight: 700; color: var(--ink); }
+  .video-desc { color: var(--muted); font-size: 0.9rem; margin-bottom: 12px; }
   
-  .video-body, .product-body { padding: 18px; }
-  .video-title, .product-title { font-size: 1.25rem; margin-bottom: 8px; font-weight: 700; }
-  .product-code { font-size: 0.8rem; color: var(--muted); margin-bottom: 6px; font-weight: 600; letter-spacing: 0.5px; }
-  .video-desc, .product-desc { color: var(--muted); font-size: 0.95rem; margin-bottom: 12px; }
-  
-  /* ETIQUETA DE PRODUCTO RELACIONADO EN VIDEO */
   .video-product-tag {
-    display: inline-block;
-    background: var(--accent);
-    color: white;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    margin-top: 8px;
-    cursor: pointer;
-    transition: background 0.2s;
-    text-decoration: none;
+    display: inline-block; background: var(--accent); color: white; padding: 4px 12px;
+    border-radius: 20px; font-size: 0.8rem; font-weight: 600; margin-top: 8px;
+    cursor: pointer; transition: background 0.2s; text-decoration: none;
   }
   .video-product-tag:hover { background: var(--accent2); }
 
-  .video-admin { display: none; gap: 8px; margin-top: 10px; }
+  .video-admin { display: none; gap: 8px; margin-top: 10px; justify-content: center; }
   .admin-on .video-admin { display: flex; }
-  .video-admin .btn { flex: 1; font-size: 0.9rem; padding: 8px; }
+  .video-admin .btn { flex: 1; font-size: 0.8rem; padding: 6px; }
+
+  /* ESTILOS ESPECÍFICOS DE TARJETA DE PRODUCTO */
+  .product { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); position: relative; }
+  .product-media {
+    width: 100%; height: 300px; background: #f8e8ee; position: relative; cursor: zoom-in;
+    transition: transform 0.3s ease; display: flex; align-items: center; justify-content: center; overflow: hidden;
+  }
+  .product-media:hover { transform: scale(1.02); }
+  .product-media img { width: 100%; height: 100%; object-fit: contain; }
+  .product-media::after {
+    content: '🔍 Ver fotos'; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(159, 18, 57, 0.7); color: white; display: flex; align-items: center;
+    justify-content: center; font-weight: 600; font-size: 1.1rem; opacity: 0; transition: opacity 0.3s ease; pointer-events: none;
+  }
+  .product-media:hover::after { opacity: 1; }
+  
+  .product-body { padding: 18px; }
+  .product-title { font-size: 1.25rem; margin-bottom: 8px; font-weight: 700; }
+  .product-code { font-size: 0.8rem; color: var(--muted); margin-bottom: 6px; font-weight: 600; letter-spacing: 0.5px; }
+  .product-desc { color: var(--muted); font-size: 0.95rem; margin-bottom: 12px; }
+  
+  /* STOCK VISIBLE */
+  .stock-info {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 12px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .stock-info.low { color: #c02639; font-weight: 700; }
 
   .offer-badge-promo {
     position: absolute; top: 12px; left: 12px; padding: 8px 16px; border-radius: 30px; font-size: 0.85rem; font-weight: 700;
@@ -300,26 +325,28 @@
   .scroll-top-btn.show { opacity: 1; visibility: visible; }
   .scroll-top-btn:hover { transform: translateY(-5px); box-shadow: 0 6px 20px rgba(159, 18, 57, 0.6); }
 
-  @media (max-width: 1024px) { .videos-grid, .products { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 1024px) { 
+    .videos-grid { grid-template-columns: repeat(3, 1fr); } 
+    .products { grid-template-columns: repeat(3, 1fr); } 
+  }
   @media (max-width: 768px) {
-    .videos-grid, .products { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .videos-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .products { grid-template-columns: repeat(2, 1fr); gap: 16px; }
     .videos-section h2::before, .videos-section h2::after, .category-section h2::before, .category-section h2::after { max-width: 60px; }
-    .video-media, .product-media { height: 260px; }
+    .video-thumbnail-container { height: 200px; }
     .topbar { justify-content: center; }
     .brand { margin-bottom: 8px; }
-    .lightbox-nav { width: 42px; height: 42px; font-size: 1.2rem; }
-    .lightbox-prev { left: 8px; }
-    .lightbox-next { right: 8px; }
     .banner-overlay { padding: 20px; }
   }
   @media (max-width: 480px) {
     .wrap { padding: 0 12px; }
-    .videos-grid, .products { grid-template-columns: 1fr; gap: 20px; }
+    .videos-grid { grid-template-columns: 1fr; gap: 20px; }
+    .products { grid-template-columns: 1fr; gap: 20px; }
     .videos-section, .category-section { margin-bottom: 50px; }
     .videos-section h2, .category-section h2 { font-size: clamp(1.6rem, 7vw, 2.2rem); margin: 40px 0 28px; gap: 10px; letter-spacing: 0.5px; }
     .videos-section h2::before, .videos-section h2::after, .category-section h2::before, .category-section h2::after { max-width: 30px; }
     .videos-section h2 > .cat-ornament, .category-section h2 > .cat-ornament { font-size: 1rem; letter-spacing: 6px; }
-    .video-media, .product-media { height: 300px; }
+    .video-thumbnail-container { height: 220px; }
     .topbar { flex-direction: column; align-items: stretch; padding: 12px 0; }
     .brand { justify-content: center; font-size: 1.4rem; }
     .topbar > div:last-child { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; }
@@ -487,9 +514,9 @@
         </div>
       </div>
 
-      <!-- CAMPOS ADMIN CON DISEÑO UNIFICADO -->
+      <!-- CAMPOS ADMIN PRIVADOS (SOLO VISIBLES SI ESTÁS LOGUEADA) -->
       <div class="admin-only admin-fields-section" style="margin-bottom:12px; padding:15px; background:#fff0f5; border-radius:8px; border:1px dashed var(--accent);">
-        <h4 style="margin-bottom:12px; color:var(--accent); font-size:0.9rem;">📋 Campos adicionales (Solo Admin)</h4>
+        <h4 style="margin-bottom:12px; color:var(--accent); font-size:0.9rem;">🔒 Campos Privados (Solo Admin)</h4>
         
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
           <div>
@@ -514,7 +541,7 @@
         </div>
 
         <div style="margin-bottom:12px;">
-          <label style="font-size:0.8rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">🔗 Link de referencia</label>
+          <label style="font-size:0.8rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">🔗 Link de referencia (Privado)</label>
           <input id="productLink" type="url" placeholder="https://..." class="form-input">
         </div>
 
@@ -525,7 +552,7 @@
       </div>
 
       <div style="margin-bottom:12px;">
-        <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">📄 Descripción</label>
+        <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">📄 Descripción Pública</label>
         <textarea id="description" placeholder="Detalles del producto..." rows="3" class="form-textarea"></textarea>
       </div>
 
@@ -557,9 +584,16 @@
       <div style="margin-bottom:12px;">
         <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">URL del video</label>
         <input id="videoUrl" type="url" placeholder="YouTube, TikTok, Instagram, Facebook..." class="form-input">
-        <p style="font-size:0.75rem; color:var(--muted); margin:4px 0 0 0;">💡 Soporta: YouTube, Instagram, TikTok, Facebook, Vimeo, Drive</p>
+        <p style="font-size:0.75rem; color:var(--muted); margin:4px 0 0 0;">💡 Pega el link directo de tu publicación.</p>
       </div>
       
+      <!-- NUEVO CAMPO: MINIATURA DEL VIDEO -->
+      <div style="margin-bottom:12px;">
+        <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">🖼️ URL de la Miniatura (Opcional)</label>
+        <input id="videoThumbnail" type="url" placeholder="Link de imagen (Drive, etc.)" class="form-input">
+        <p style="font-size:0.75rem; color:var(--muted); margin:4px 0 0 0;">💡 Si no pones nada, se verá un ícono por defecto.</p>
+      </div>
+
       <!-- NUEVO CAMPO: PRODUCTO RELACIONADO -->
       <div style="margin-bottom:12px;">
         <label style="font-size:0.85rem; font-weight:600; color:var(--accent); display:block; margin-bottom:4px;">🔗 Producto relacionado (opcional)</label>
@@ -788,7 +822,7 @@ productsRef.onSnapshot((snapshot) => {
   products = [];
   snapshot.forEach(doc => products.push({ id: doc.id, ...doc.data() }));
   renderProducts();
-  updateProductDatalist(); // Actualizar lista de productos para videos
+  updateProductDatalist();
   updateCartCount();
   showSync('Listo', 'success', 1500);
 }, (error) => { 
@@ -1218,9 +1252,10 @@ function renderProducts() {
         priceHtml = `<p class="price">${Number(p.price || 0).toFixed(2)} Bs</p>`;
       }
       
+      // LINK DE REFERENCIA SOLO PARA ADMIN
       let linkHtml = '';
       if (adminMode && p.productLink) {
-        linkHtml = `<div style="margin-top:8px;"><a href="${p.productLink}" target="_blank" class="btn btn-link" title="${p.productLink}">🔗 Ver referencia</a></div>`;
+        linkHtml = `<div style="margin-top:8px;"><a href="${p.productLink}" target="_blank" class="btn btn-link" title="${p.productLink}">🔗 Ver referencia (Admin)</a></div>`;
       }
       
       html += `
@@ -1235,6 +1270,12 @@ function renderProducts() {
             ${p.code ? `<p class="product-code">Cód: ${p.code}</p>` : ''}
             <p class="product-desc">${p.description || ''}</p>
             ${priceHtml}
+            
+            <!-- STOCK VISIBLE PARA TODOS -->
+            <div class="stock-info ${p.stock < 5 ? 'low' : ''}">
+              📦 Stock: ${p.stock} unidades
+            </div>
+
             ${linkHtml}
             <button class="btn btn-primary" onclick="addToCart('${p.id}')" style="width:100%; margin-top:10px;" ${!inStock ? 'disabled' : ''}>${inStock ? 'Agregar al carrito' : 'Sin stock'}</button>
             ${adminMode ? `<div style="display:flex; gap:8px; margin-top:8px;"><button class="btn btn-secondary" onclick="editProduct('${p.id}')" style="flex:1;">✏️ Editar</button><button class="btn btn-danger" onclick="deleteProduct('${p.id}')" style="flex:1;">🗑️ Eliminar</button></div>` : ''}
@@ -1261,13 +1302,12 @@ function renderProducts() {
         </div>
       `;
     } else if (section.type === 'video') {
-      const thumbnail = getVideoThumbnail(section.videoUrl);
-      const thumbHtml = thumbnail ? `<img class="video-thumb" src="${thumbnail}" alt="${section.title}" loading="lazy" oncontextmenu="return false;" style="pointer-events: none; user-select: none; -webkit-user-drag: none;">` : `<div style="width:100%;height:300px;display:flex;align-items:center;justify-content:center;color:white;font-size:3rem;background:#1a0a0e;">🎬</div>`;
       return `
         <div style="margin: 40px 0; position:relative;">
           <div class="video-card" style="max-width:800px; margin:0 auto;">
-            <div class="video-media" onclick="openVideoLightbox('${section.id}', true)" style="height:400px;">
-              ${thumbHtml}
+            <div class="video-thumbnail-container" onclick="window.open('${section.videoUrl}', '_blank')">
+              ${section.thumbnail ? `<img src="${convertMediaUrl(section.thumbnail, 800)}" class="video-thumbnail-img">` : ''}
+              <div class="video-play-icon">▶️</div>
             </div>
             <div class="video-body" style="text-align:center;">
               <h3 class="video-title">${section.title || 'Video'}</h3>
@@ -1297,7 +1337,7 @@ function renderProducts() {
 }
 
 // ================================================================
-// 🎬 RENDERIZADO DE VIDEOS MEJORADO
+// 🎬 RENDERIZADO DE VIDEOS (CON MINIATURAS)
 // ================================================================
 function renderFeaturedVideos() {
   const container = document.getElementById('featuredVideosContainer');
@@ -1307,9 +1347,6 @@ function renderFeaturedVideos() {
   let html = `<div class="videos-section"><div class="category-wrapper-title"><h2>🎬 Videos Principales</h2><span class="cat-ornament">✦ ✦ ✦</span></div><div class="videos-grid">`;
   
   featuredVideos.forEach(video => {
-    const thumbnail = getVideoThumbnail(video.url);
-    const thumbHtml = thumbnail ? `<img class="video-thumb" src="${thumbnail}" alt="${video.title}" loading="lazy" oncontextmenu="return false;" style="pointer-events: none; user-select: none; -webkit-user-drag: none;">` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:white;font-size:3rem;">🎬</div>`;
-    
     // Botón de producto relacionado
     let relatedProductHtml = '';
     if (video.relatedProductId) {
@@ -1320,13 +1357,15 @@ function renderFeaturedVideos() {
     }
 
     html += `<div class="video-card">
-      <div class="video-media" onclick="openVideoLightbox('${video.id}', false)">
-        ${thumbHtml}
+      <div class="video-thumbnail-container" onclick="window.open('${video.url}', '_blank')">
+        ${video.thumbnail ? `<img src="${convertMediaUrl(video.thumbnail, 800)}" class="video-thumbnail-img">` : ''}
+        <div class="video-play-icon">▶️</div>
       </div>
       <div class="video-body">
         <h3 class="video-title">${video.title}</h3>
         ${video.description ? `<p class="video-desc">${video.description}</p>` : ''}
         ${relatedProductHtml}
+        <a href="${video.url}" target="_blank" class="btn-insta">▶️ Ver Video</a>
         <div class="video-admin">
           <button class="btn btn-secondary" onclick="editVideo('${video.id}')">Editar</button>
           <button class="btn btn-danger" onclick="deleteVideo('${video.id}')">Eliminar</button>
@@ -1371,85 +1410,11 @@ function renderBanners() {
 }
 
 // ================================================================
-// 🧹 LIMPIEZA DE URLS Y UTILIDADES DE LINKS
+// UTILIDADES DE LINKS
 // ================================================================
 function cleanUrl(url) {
   if (!url) return '';
   return url.split('?')[0].split('#')[0].trim();
-}
-
-function getVideoPlatform(url) {
-  if (!url) return null;
-  const clean = cleanUrl(url);
-  const lower = clean.toLowerCase();
-  if (lower.includes('youtube.com') || lower.includes('youtu.be')) return 'youtube';
-  if (lower.includes('instagram.com')) return 'instagram';
-  if (lower.includes('tiktok.com')) return 'tiktok';
-  if (lower.includes('facebook.com') || lower.includes('fb.watch') || lower.includes('fb.com')) return 'facebook';
-  if (lower.includes('vimeo.com')) return 'vimeo';
-  if (lower.includes('drive.google.com')) return 'drive';
-  if (lower.includes('twitter.com') || lower.includes('x.com')) return 'twitter';
-  if (lower.includes('pinterest.com')) return 'pinterest';
-  if (/\.(mp4|webm|ogg|mov)(\?|$)/i.test(clean)) return 'direct';
-  return 'unknown';
-}
-
-function getYoutubeId(url) { 
-  const clean = cleanUrl(url);
-  const patterns = [
-    /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/))([-\w]+)/,
-    /youtube\.com\/watch\?.*v=([-\w]+)/
-  ];
-  for (const pattern of patterns) {
-    const m = clean.match(pattern);
-    if (m && m[1]) return m[1];
-  }
-  return null; 
-}
-
-function getInstagramInfo(url) { 
-  const clean = cleanUrl(url);
-  const m = clean.match(/instagram\.com\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/); 
-  return m ? m[1] : null; 
-}
-
-function getInstagramCleanUrl(url) {
-  const code = getInstagramInfo(url);
-  if (!code) return null;
-  return `https://www.instagram.com/p/${code}/`;
-}
-
-function getTikTokInfo(url) { 
-  const clean = cleanUrl(url);
-  const m = clean.match(/tiktok\.com\/(?:@[\w.-]+\/video\/|video\/)(\d+)/); 
-  return m ? m[1] : null; 
-}
-
-function getFacebookInfo(url) {
-  const clean = cleanUrl(url);
-  const patterns = [
-    /facebook\.com\/.*\/videos\/(\d+)/,
-    /facebook\.com\/.*\/videos\/([-\w]+)/,
-    /fb\.watch\/([-\w]+)/,
-    /fb\.com\/.*\/videos\/(\d+)/
-  ];
-  for (const pattern of patterns) {
-    const m = clean.match(pattern);
-    if (m && m[1]) return m[1];
-  }
-  return null;
-}
-
-function getVimeoId(url) { 
-  const clean = cleanUrl(url);
-  const m = clean.match(/vimeo\.com\/(\d+)/); 
-  return m ? m[1] : null; 
-}
-
-function getTwitterInfo(url) {
-  const clean = cleanUrl(url);
-  const m = clean.match(/twitter\.com\/[\w]+\/status\/(\d+)/);
-  return m ? m[1] : null;
 }
 
 function getDriveId(url) {
@@ -1464,92 +1429,10 @@ function getDriveId(url) {
   return null;
 }
 
-function getVideoThumbnail(url) {
-  const platform = getVideoPlatform(url);
-  switch(platform) {
-    case 'youtube': 
-      const ytId = getYoutubeId(url); 
-      return ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null;
-    case 'instagram': 
-      return 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="300"%3E%3Crect fill="%23E1306C" width="300" height="300"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="24" font-family="Arial"%3E📷 Instagram%3C/text%3E%3C/svg%3E';
-    case 'tiktok': 
-      return 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="300"%3E%3Crect fill="%23000" width="300" height="300"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="24" font-family="Arial"%3E🎵 TikTok%3C/text%3E%3C/svg%3E';
-    case 'facebook':
-      return 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="300"%3E%3Crect fill="%231877F2" width="300" height="300"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="24" font-family="Arial"%3E📘 Facebook%3C/text%3E%3C/svg%3E';
-    case 'vimeo': 
-      const vimeoId = getVimeoId(url); 
-      return vimeoId ? `https://vumbnail.com/${vimeoId}.jpg` : null;
-    case 'twitter':
-      return 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="300"%3E%3Crect fill="%231DA1F2" width="300" height="300"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="24" font-family="Arial"%3E🐦 Twitter%3C/text%3E%3C/svg%3E';
-    case 'drive': 
-      const driveId = getDriveId(url); 
-      return driveId ? `https://drive.google.com/thumbnail?id=${driveId}&sz=w800` : null;
-    default: 
-      return null;
-  }
-}
-
-function getVideoEmbedUrl(url) {
-  const platform = getVideoPlatform(url);
-  switch(platform) {
-    case 'youtube': 
-      const ytId = getYoutubeId(url); 
-      return ytId ? `https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0` : null;
-    case 'instagram': 
-      const igCode = getInstagramInfo(url); 
-      return igCode ? `https://www.instagram.com/p/${igCode}/embed` : null;
-    case 'tiktok': 
-      const ttId = getTikTokInfo(url); 
-      return ttId ? `https://www.tiktok.com/embed/v2/${ttId}` : null;
-    case 'facebook':
-      const fbId = getFacebookInfo(url);
-      return fbId ? `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(cleanUrl(url))}&show_text=0&width=560` : null;
-    case 'vimeo': 
-      const vimeoId = getVimeoId(url); 
-      return vimeoId ? `https://player.vimeo.com/video/${vimeoId}?autoplay=1` : null;
-    case 'twitter':
-      const twId = getTwitterInfo(url);
-      return twId ? `https://platform.twitter.com/embed/Tweet.html?id=${twId}` : null;
-    case 'drive': 
-      const driveId = getDriveId(url); 
-      return driveId ? `https://drive.google.com/file/d/${driveId}/preview` : null;
-    case 'direct': 
-      return cleanUrl(url);
-    default: 
-      return null;
-  }
-}
-
-function getGiphyDirectUrl(url) {
-  if (!url) return null;
-  const lower = url.toLowerCase();
-  if (!lower.includes('giphy.com')) return null;
-  if (lower.includes('media.giphy.com')) return url.replace(/\/\d+(w|s|t)?\.gif/i, '/giphy.gif').replace(/\/\d+(w|s|t)?\.webp/i, '/giphy.gif');
-  const m1 = url.match(/giphy\.com\/gifs\/.*-([a-zA-Z0-9]+)$/); 
-  if (m1 && m1[1]) return `https://media.giphy.com/media/${m1[1]}/giphy.gif`;
-  const m2 = url.match(/giphy\.com\/media\/([a-zA-Z0-9]+)/); 
-  if (m2 && m2[1]) return `https://media.giphy.com/media/${m2[1]}/giphy.gif`;
-  return null;
-}
-
-function getTenorDirectUrl(url) {
-  if (!url) return null;
-  const lower = url.toLowerCase();
-  if (!lower.includes('tenor.com')) return null;
-  if (lower.includes('media.tenor.com')) return url;
-  const m = url.match(/tenor\.com\/view\/.*?(\d{7,})/); 
-  if (m && m[1]) return `https://media.tenor.com/images/${m[1]}/tenor.gif`;
-  return null;
-}
-
 function convertMediaUrl(url, size = 1200) {
   if (!url) return '';
   const clean = url.trim();
   const lower = clean.toLowerCase();
-  const giphyUrl = getGiphyDirectUrl(clean); 
-  if (giphyUrl) return giphyUrl;
-  const tenorUrl = getTenorDirectUrl(clean); 
-  if (tenorUrl) return tenorUrl;
   if (lower.includes('drive.google.com/thumbnail') || lower.includes('lh3.googleusercontent.com') || lower.includes('/uc?')) {
     if (lower.includes('thumbnail')) return clean.replace(/sz=\d+/, `sz=w${size}`);
     return clean;
@@ -1572,7 +1455,6 @@ function updateCategorySuggestions() {
   datalist.innerHTML = uniqueCategories.map(cat => `<option value="${cat.replace(/"/g, '&quot;')}">`).join('');
 }
 
-// 🆕 ACTUALIZAR LISTA DE PRODUCTOS PARA EL FORMULARIO DE VIDEO
 function updateProductDatalist() {
   const datalist = document.getElementById('productList');
   if (!datalist) return;
@@ -1580,28 +1462,12 @@ function updateProductDatalist() {
 }
 
 // ================================================================
-// LIGHTBOX AUTOAJUSTABLE
+// LIGHTBOX (SOLO PARA FOTOS DE PRODUCTOS)
 // ================================================================
 function openMediaModal(productId) {
   const product = products.find(p => p.id === productId);
   if (!product || !product.media || product.media.length === 0) return;
   currentMediaList = product.media.map(url => ({ type: 'image', url }));
-  currentMediaIndex = 0;
-  renderLightboxMedia();
-  document.getElementById('mediaModal').showModal();
-}
-
-function openVideoLightbox(id, isCustom = false) {
-  let video;
-  if (isCustom) {
-    video = customSections.find(v => v.id === id);
-    if (!video) return;
-    currentMediaList = [{ type: 'video', url: video.videoUrl, title: video.title }];
-  } else {
-    video = featuredVideos.find(v => v.id === id);
-    if (!video) return;
-    currentMediaList = [{ type: 'video', url: video.url, title: video.title }];
-  }
   currentMediaIndex = 0;
   renderLightboxMedia();
   document.getElementById('mediaModal').showModal();
@@ -1623,55 +1489,19 @@ function renderLightboxMedia() {
   const container = document.getElementById('mediaContainer');
   container.innerHTML = '';
   const media = currentMediaList[currentMediaIndex];
-  if (media.type === 'video') {
-    const platform = getVideoPlatform(media.url);
-    
-    if (platform === 'instagram') {
-      const cleanInstagramUrl = getInstagramCleanUrl(media.url);
-      if (cleanInstagramUrl) {
-        container.innerHTML = `<iframe src="${cleanInstagramUrl}embed" style="width:100%; max-width:500px; height:80vh; border:none; background:white;" allowtransparency="true"></iframe>`;
-      } else {
-        container.innerHTML = `<div class="media-fallback"><div class="media-fallback-icon">📷</div><div class="media-fallback-title">No se pudo cargar Instagram</div><a href="${media.url}" target="_blank" class="media-fallback-btn">🔗 Abrir en Instagram</a></div>`;
-      }
-    } else if (platform === 'tiktok') {
-      const ttId = getTikTokInfo(media.url);
-      if (ttId) {
-        container.innerHTML = `<iframe src="https://www.tiktok.com/embed/v2/${ttId}" style="width:100%; max-width:400px; height:80vh; border:none;" allow="encrypted-media"></iframe>`;
-      } else {
-        container.innerHTML = `<div class="media-fallback"><div class="media-fallback-icon">🎵</div><div class="media-fallback-title">No se pudo cargar TikTok</div><a href="${media.url}" target="_blank" class="media-fallback-btn">🔗 Abrir en TikTok</a></div>`;
-      }
-    } else if (platform === 'facebook') {
-      const fbEmbedUrl = getVideoEmbedUrl(media.url);
-      if (fbEmbedUrl) {
-        container.innerHTML = `<iframe src="${fbEmbedUrl}" style="width:100%; max-width:560px; height:80vh; border:none; overflow:hidden;" scrolling="no" allow="encrypted-media" allowtransparency="true"></iframe>`;
-      } else {
-        container.innerHTML = `<div class="media-fallback"><div class="media-fallback-icon">📘</div><div class="media-fallback-title">No se pudo cargar Facebook</div><a href="${media.url}" target="_blank" class="media-fallback-btn">🔗 Abrir en Facebook</a></div>`;
-      }
-    } else {
-      const embedUrl = getVideoEmbedUrl(media.url);
-      if (embedUrl) {
-        if (media.url.match(/\.(mp4|webm|ogg|mov)(\?|$)/i)) {
-          container.innerHTML = `<video src="${cleanUrl(media.url)}" controls autoplay style="max-width:100%; max-height:82vh;"></video>`;
-        } else {
-          container.innerHTML = `<iframe src="${embedUrl}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="width:100%; height:100%; border:none;"></iframe>`;
-        }
-      } else {
-        container.innerHTML = `<div class="media-fallback"><div class="media-fallback-icon">🎬</div><div class="media-fallback-title">Video no compatible</div><a href="${media.url}" target="_blank" class="media-fallback-btn">🔗 Abrir</a></div>`;
-      }
-    }
-  } else {
-    const rawUrl = media.url.trim();
-    const finalUrl = convertMediaUrl(rawUrl, 2000);
-    const img = document.createElement('img');
-    img.src = finalUrl;
-    img.alt = 'Foto';
-    img.style.maxWidth = '100%';
-    img.style.maxHeight = '82vh';
-    img.onerror = () => { 
-      container.innerHTML = `<div class="media-fallback"><div class="media-fallback-icon">🖼️</div><div class="media-fallback-title">No se pudo cargar</div><a href="${rawUrl}" target="_blank" class="media-fallback-btn">🔗 Abrir link</a></div>`; 
-    };
-    container.appendChild(img);
-  }
+  
+  const rawUrl = media.url.trim();
+  const finalUrl = convertMediaUrl(rawUrl, 2000);
+  const img = document.createElement('img');
+  img.src = finalUrl;
+  img.alt = 'Foto';
+  img.style.maxWidth = '100%';
+  img.style.maxHeight = '82vh';
+  img.onerror = () => { 
+    container.innerHTML = `<div class="media-fallback"><div class="media-fallback-icon">🖼️</div><div class="media-fallback-title">No se pudo cargar</div><a href="${rawUrl}" target="_blank" class="media-fallback-btn">🔗 Abrir link</a></div>`; 
+  };
+  container.appendChild(img);
+
   document.getElementById('mediaCounter').textContent = `${currentMediaIndex + 1} / ${currentMediaList.length}`;
   const display = currentMediaList.length > 1 ? 'flex' : 'none';
   document.getElementById('prevMediaBtn').style.display = display;
@@ -1804,7 +1634,7 @@ document.getElementById('addVideoBtn').addEventListener('click', () => {
   editingVideoId = null;
   document.getElementById('videoDialogTitle').textContent = "🎬 Agregar Video";
   document.getElementById('videoForm').reset();
-  updateProductDatalist(); // Cargar lista de productos
+  updateProductDatalist();
   document.getElementById('videoDialog').showModal();
 });
 
@@ -1813,7 +1643,6 @@ document.getElementById('videoForm').addEventListener('submit', async function(e
   if (!adminMode) return;
   showSync('Guardando...', 'loading', 0);
   
-  // Buscar ID del producto relacionado
   const relatedProductName = document.getElementById('relatedProduct').value;
   const relatedProduct = products.find(p => p.title === relatedProductName);
   const relatedId = relatedProduct ? relatedProduct.id : '';
@@ -1822,6 +1651,7 @@ document.getElementById('videoForm').addEventListener('submit', async function(e
     title: document.getElementById('videoTitle').value.trim(), 
     description: document.getElementById('videoDesc').value.trim(), 
     url: document.getElementById('videoUrl').value.trim(), 
+    thumbnail: document.getElementById('videoThumbnail').value.trim(), // GUARDAR MINIATURA
     relatedProductId: relatedId,
     updatedAt: Date.now() 
   };
@@ -1854,8 +1684,8 @@ function editVideo(id) {
   document.getElementById('videoTitle').value = video.title || '';
   document.getElementById('videoDesc').value = video.description || '';
   document.getElementById('videoUrl').value = video.url || '';
+  document.getElementById('videoThumbnail').value = video.thumbnail || ''; // CARGAR MINIATURA
   
-  // Cargar producto relacionado si existe
   if (video.relatedProductId) {
     const related = products.find(p => p.id === video.relatedProductId);
     if (related) document.getElementById('relatedProduct').value = related.title;
@@ -2068,7 +1898,7 @@ renderProducts();
 renderFeaturedVideos();
 renderBanners();
 
-// Prevenir clic derecho en imágenes
+// PREVENIR DESCARGA Y CLIC DERECHO EN IMÁGENES
 document.addEventListener('contextmenu', (e) => {
   if (e.target.tagName === 'IMG') {
     e.preventDefault();
@@ -2076,7 +1906,6 @@ document.addEventListener('contextmenu', (e) => {
   }
 });
 
-// Prevenir arrastre de imágenes
 document.addEventListener('dragstart', (e) => {
   if (e.target.tagName === 'IMG') {
     e.preventDefault();
